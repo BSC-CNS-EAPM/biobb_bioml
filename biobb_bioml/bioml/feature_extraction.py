@@ -47,13 +47,7 @@ class Feature_extraction(BiobbObject):
                                     without the spaces. If only index or name of the sheets, it is assumed that all kfold models
                                     are selected. It is possible to have one sheet with kfold indices but in another ones
                                     without.
-            
-            * **container_path** (*str*) - (None)  Path to the binary executable of your container.
-            * **container_image** (*str*) - ("") Container Image identifier.
-            * **container_volume_path** (*str*) - ("/data") Path to an internal directory in the container.
-            * **container_working_dir** (*str*) - (None) Path to the internal CWD in the container.
-            * **container_user_id** (*str*) - (None) User number id to be mapped inside the container.
-            * **container_shell_path** (*str*) - ("/bin/bash") Path to the binary executable of the container shell.
+           
 
     Examples:
         This is a use example of how to use the building block from Python::
@@ -116,7 +110,7 @@ class Feature_extraction(BiobbObject):
         self.type_file = properties.get('type_file', None)
         self.sheets = properties.get('selected', None)
 
-        # Properties common in all GROMACS BB
+        # Properties common in all BB
 
         # Check the properties
         self.check_properties(properties)
@@ -224,7 +218,7 @@ def feature_extraction(input_fasta_file: str, properties: dict = None, **kwargs)
 
 def main():
     """Command line execution of this building block. Please check the command line documentation."""
-    parser = argparse.ArgumentParser(description="Wrapper for the BioMl ensemble module.",
+    parser = argparse.ArgumentParser(description="Wrapper for the BioMl feature_extraction module.",
                                      formatter_class=lambda prog: argparse.RawTextHelpFormatter(prog, width=99999))
     parser.add_argument('-c', '--config', required=False, help="This file can be a YAML file, JSON file or JSON string")
 

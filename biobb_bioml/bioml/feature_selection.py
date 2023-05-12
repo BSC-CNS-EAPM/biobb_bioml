@@ -17,62 +17,39 @@ class Feature_selection(BiobbObject):
     | biobb_bioml Feature selection
     | Wrapper class for the `bioml Feature selection <>`_ module.
     | Preprocess and Select the best features.
-    TODO: Add a description of the module.
+    
     Args:
         input_features (str): The path to the training features that contains both ifeature and possum in csv format. `Sample file <>`_. Accepted formats: fasta (edam:format_1929).
-
         properties (dict - Python dictionary object containing the tool parameters, not input/output files):
-            * **label** (*str*) - ("pssm") The pssm files directory's path.
-            * **fasta_dir** (*str*) - ("fasta_files") The directory for the fasta files.
-            * **ifeature_dir** (*str*) - ("iFeature") Path to the iFeature programme folder.
-            * **possum_dir** (*str*) - ("POSSUM_Toolkit") A path to the possum programme.
-            * **ifeature_out** (*str*) - ("ifeature_features") The directory where the ifeature features are.
-            * **possum_out** (*str*) - ("possum_features") The directory for the possum extractions.
-            * **filtered_out** (*str*) - ("training_features") The directory for the filtered features from the new data or the features for training.
-            * **excel** (*str*) - ("training_features/selected_features.xlsx") The path to where the selected features from training are saved in excel format, it will
-                                    be used to select specific columns from all the generated features for the new data.
-            * **purpose** (*str*) - ("extract") Choose the operation between extracting reading for training or filtering for prediction, ("extract", "read", "filter").
-            * **long** (*str*) - (False) True when restarting from the long commands.
-            * **run** (*str*) - ("both") Run possum or ifeature extraction, ("possum", "ifeature", "both").
-            * **num_thread** (*int*) - (100) The number of threads to use for the generation of pssm profiles.
-            * **type** (*str*) - ("all") A list of the features to extract, ("all", "APAAC", "PAAC",
-                        "CKSAAGP","Moran", "Geary", "NMBroto", "CTDC", "CTDT", "CTDD", "CTriad", "GDPC", "GTPC",
-                        "QSOrder", "SOCNumber", "GAAC", "KSCtriad",
-                        "aac_pssm", "ab_pssm", "d_fpssm", "dp_pssm", "dpc_pssm", "edp", "eedp", "rpm_pssm",
-                        "k_separated_bigrams_pssm", "pssm_ac", "pssm_cc", "pssm_composition", "rpssm", "s_fpssm",
-                        "smoothed_pssm:5", "smoothed_pssm:7", "smoothed_pssm:9", "tpc", "tri_gram_pssm", "pse_pssm:1",
-                        "pse_pssm:2", "pse_pssm:3").
-            * **type_file** (*str*) - (None) The path to the a file with the feature names.
-            * **selected** (*str*) - (None) The selected_algorithms with the selected feature sets in algorithm:feature_set format.
-            
-            * **container_path** (*str*) - (None)  Path to the binary executable of your container.
-            * **container_image** (*str*) - ("") Container Image identifier.
-            * **container_volume_path** (*str*) - ("/data") Path to an internal directory in the container.
-            * **container_working_dir** (*str*) - (None) Path to the internal CWD in the container.
-            * **container_user_id** (*str*) - (None) User number id to be mapped inside the container.
-            * **container_shell_path** (*str*) - ("/bin/bash") Path to the binary executable of the container shell.
+            * **label** (*str*) - (None) The path to the labels of the training set in a csv format if not in the features, if present in the features csv use the flag to specify the label column name
+            * **feature_range** (*str*) - ("20:none:10") Specify the minimum and maximum of number of features in start:stop:step format or a single integer. Stop can be none then the default value will be (n_samples / 2)".
+            * **num_thread** (*int*) - (10) The number of threads to use for parallelizing the feature selection.
+            * **variance_threshold** (*float*) - (7) It will influence the features to be eliminated the larger the less restrictive.
+            * **scaler** (*str*) - ("robust") Choose one of the scaler available in scikit-learn, defaults to RobustScaler. Options: ("robust", "standard", "minmax").
+            * **excel** (*str*) - ("training_features/selected_features.xlsx") The file path to where the selected features will be saved in excel format.
+            * **kfold_parameters** (*str*) - ("5:0.2") The parameters for the kfold in num_split:test_size format.
+            * **rfe_steps** (*int*) - (40) The number of steps for the RFE algorithm, the more step the more precise but also more time consuming be used to select specific columns from all the generated features for the new data.
+            * **plot** (*bool*) - (True) Default to true, plot the feature importance using shap.
+            * **plot_num_features** (*int*) - (20) How many features to include in the plot.
 
     Examples:
         This is a use example of how to use the building block from Python::
 
             from biobb_bioml.ensemble import ensemble
-            prop = { pssm_dir: 'pssm', 
-                    fasta_dir: 'fasta_files', 
-                    ifeature_dir: 'iFeature', 
-                    possum_dir: 'POSSUM_Toolkit',
-                    ifeature_out: 'ifeature_features',
+            prop = { features: 'training_features/every_features.csv', 
+                    feature_range: '20:none:10', 
+                    num_thread: 10, 
+                    variance_threshold: 7,
+                    scaler: 'robust',
                     possum_out: 'possum_features',
                     filtered_out: 'training_features',
                     excel: 'training_features/selected_features.xlsx',
-                    purpose: 'extract',
-                    long: False,
-                    run: 'both',
-                    num_thread: 100,
-                    type: 'all',
-                    type_file: None,
-                    selected: None }
+                    kfold_parameters: '5:0.2',
+                    rfe_steps: 40,
+                    plot: True,
+                    plot_num_features: 20}
                     
-            feature_extraction(input_fasta_file='input.fasta',
+            feature_selection(input_features='input.fasta',
                             properties=prop)
 
     Info:
@@ -84,7 +61,7 @@ class Feature_selection(BiobbObject):
             * name: EDAM
             * schema: http://edamontology.org/EDAM.owl
     """
-    def __init__(self, input_fasta_file: str, properties: dict = None, **kwargs) -> None:
+    def __init__(self, input_features: str, properties: dict = None, **kwargs) -> None:
         properties = properties or {}
 
         # Call parent class constructor
@@ -92,35 +69,30 @@ class Feature_selection(BiobbObject):
 
         # Input/Output files
         self.io_dict = {
-            "in": {"input_fasta_file": input_fasta_file},
+            "in": {"input_features": input_features},
             "out": {}
         }
 
         # Properties specific for BB
-        self.pssm_dir = properties.get('pssm_dir', 'pssm')
-        self.fasta_dir = properties.get('fasta_dir', 'fasta_files')
-        self.ifeature_dir = properties.get('ifeature_dir', 'iFeature')
-        self.possum_dir = properties.get('possum_dir', 'POSSUM_Toolkit')
-        self.ifeature_out = properties.get('ifeature_out', 'ifeature_features')
-        self.possum_out = properties.get('possum_out', 'possum_features')
-        self.filtered_out = properties.get('filtered_out', 'training_features')
+        self.label = properties.get('label', None)
+        self.feature_range = properties.get('feature_range', '20:none:10')
+        self.num_thread = properties.get('num_thread', 10)
+        self.variance_threshold = properties.get('variance_threshold', 7)
+        self.scaler = properties.get('scaler', 'robust')
         self.excel = properties.get('excel', 'training_features/selected_features.xlsx')
-        self.purpose = properties.get('purpose', 'extract')
-        self.long = properties.get('long', False)
-        self.run = properties.get('run', 'both')
-        self.num_thread = properties.get('num_thread', 100)
-        self.type = properties.get('type', 'all')
-        self.type_file = properties.get('type_file', None)
-        self.selected = properties.get('selected', None)
+        self.kfold_parameters = properties.get('kfold_parameters', '5:0.2')
+        self.rfe_steps = properties.get('rfe_steps', 40)
+        self.plot = properties.get('plot', True)
+        self.plot_num_features = properties.get('plot_num_features', 20)
 
-        # Properties common in all GROMACS BB
+        # Properties common in all BB
 
         # Check the properties
         self.check_properties(properties)
 
     @launchlogger
     def launch(self) -> int:
-        """Execute the :class:`Feature_extraction <bioml.feature_extraction.Feature_extraction>` object."""
+        """Execute the :class:`feature_selection <bioml.feature_selection.feature_selection>` object."""
 
         # Setup Biobb
         if self.check_restart(): return 0
@@ -133,9 +105,29 @@ class Feature_selection(BiobbObject):
 
         # This is a placeholder
         fu.log('Creating command line with parameters', self.out_log, self.global_log)
-        self.cmd = ['python -m Feature_extraction',
-                    '-i', self.stage_io_dict["in"]["input_fasta_file"]]
-
+        self.cmd = ['python -m feature_selection',
+                    '--features', self.stage_io_dict["in"]["input_features"]]
+        
+        if self.label:
+            self.cmd.append(f"--label {self.label}")
+        if self.feature_range:
+            self.cmd.append(f"--feature_range {self.feature_range}")
+        if self.num_thread:
+            self.cmd.append(f"--num_thread {self.num_thread}")
+        if self.variance_threshold:
+            self.cmd.append(f"--variance_threshold {self.variance_threshold}")
+        if self.scaler:
+            self.cmd.append(f"--scaler {self.scaler}")
+        if self.excel:
+            self.cmd.append(f"--excel {self.excel}")
+        if self.kfold_parameters:
+            self.cmd.append(f"--kfold_parameters {self.kfold_parameters}")
+        if self.rfe_steps:
+            self.cmd.append(f"--rfe_steps {self.rfe_steps}")
+        if self.plot:
+            self.cmd.append(f"--plot {self.plot}")
+        if self.plot_num_features:
+            self.cmd.append(f"--plot_num_features {self.plot_num_features}")
 
 
         # Run Biobb block
@@ -154,28 +146,28 @@ class Feature_selection(BiobbObject):
         return self.return_code
 
 
-def feature_selection(input_fasta_file: str, properties: dict = None, **kwargs) -> int:
-    """Create :class:`Feature_extraction <bioml.feature_extraction.Feature_extraction>` class and
-        execute the :meth:`launch() <bioml.feature_extraction.Feature_extraction.launch>` method."""
-    return Feature_selection(input_fasta_file=input_fasta_file, properties=properties, **kwargs).launch()
+def feature_selection(input_features: str, properties: dict = None, **kwargs) -> int:
+    """Create :class:`feature_selection <bioml.feature_selection.Feature_selection>` class and
+        execute the :meth:`launch() <bioml.feature_selection.feature_selection.launch>` method."""
+    return Feature_selection(input_features=input_features, properties=properties, **kwargs).launch()
 
 
 def main():
     """Command line execution of this building block. Please check the command line documentation."""
-    parser = argparse.ArgumentParser(description="Wrapper for the BioMl ensemble module.",
+    parser = argparse.ArgumentParser(description="Wrapper for the BioMl feature_selection module.",
                                      formatter_class=lambda prog: argparse.RawTextHelpFormatter(prog, width=99999))
     parser.add_argument('-c', '--config', required=False, help="This file can be a YAML file, JSON file or JSON string")
 
     # Specific args of each building block
     required_args = parser.add_argument_group('required arguments')
-    required_args.add_argument('-i', required=True)
+    required_args.add_argument('--input_features', required=True)
 
     args = parser.parse_args()
     config = args.config if args.config else None
     properties = settings.ConfReader(config=config).get_prop_dic()
 
     # Specific call of each building block
-    feature_extraction(input_fasta_file=args.i, properties=properties)
+    feature_selection(input_features=args.input_features, properties=properties)
 
 
 if __name__ == '__main__':

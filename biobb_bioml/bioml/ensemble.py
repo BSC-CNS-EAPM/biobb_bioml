@@ -37,13 +37,7 @@ class Ensemble(BiobbObject):
             * **kfold_parameters** (*str*) - ("5:0.2") The parameters for the kfold in num_split:test_size format.
             * **label** (*str*) - (None) The path to the labels of the training set in a csv format.
             * **scaler** (*str*) - ("robust") Choose one of the scaler available in scikit-learn, defaults to RobustScaler, ("robust", "standard", "minmax").
-            * **container_path** (*str*) - (None)  Path to the binary executable of your container.
-            * **container_image** (*str*) - ("") Container Image identifier.
-            * **container_volume_path** (*str*) - ("/data") Path to an internal directory in the container.
-            * **container_working_dir** (*str*) - (None) Path to the internal CWD in the container.
-            * **container_user_id** (*str*) - (None) User number id to be mapped inside the container.
-            * **container_shell_path** (*str*) - ("/bin/bash") Path to the binary executable of the container shell.
-
+           
     Examples:
         This is a use example of how to use the building block from Python::
 
@@ -95,7 +89,7 @@ class Ensemble(BiobbObject):
         self.label = properties.get('label', None)
         self.scaler = properties.get('scaler', 'robust')
 
-        # Properties common in all GROMACS BB
+        # Properties common in all BB
 
 
         # Check the properties
