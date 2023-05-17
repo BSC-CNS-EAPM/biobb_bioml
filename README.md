@@ -1,4 +1,4 @@
-# biobb_structure_checking
+# biobb_bioml
 ### Introduction
 BioBB_bioml performs feature detection and extraction to train ML algorithms to detect protein similarities.
 

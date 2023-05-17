@@ -1,0 +1,8 @@
+/biobb_bioml/test/
+.idea/
+.vscode/
+biobb_bioml.egg-info/
+build/
+dist/
+biobb_bioml/__pycache__/
+biobb_bioml/bioml/__pycache__/

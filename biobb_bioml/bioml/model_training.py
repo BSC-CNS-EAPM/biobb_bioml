@@ -1,47 +1,53 @@
 #!/usr/bin/env python3
 
 """Module containing the Model training class and the command line interface."""
-import os
-import shutil
 import argparse
-from pathlib import Path
 from biobb_common.generic.biobb_object import BiobbObject
 from biobb_common.configuration import settings
 from biobb_common.tools import file_utils as fu
 from biobb_common.tools.file_utils import launchlogger
+from biobb_bioml.bioml import common as com
 
 
 
-class Generate_mode(BiobbObject):
+class Model_training(BiobbObject):
     """
-    | biobb_bioml Generate model
-    | Wrapper class for the `bioml Generate model <>`_ module.
-    | Generate the models from the ensemble.
-    # TODO adapt to generate model
+    | biobb_bioml Model training
+    | Wrapper class for the `bioml Model training module.
+    | Train the models.
+
     Args:
         input_excel (str): The file to where the selected features are saved in excel format.
-        output_model (str): The directory for the generated model. Default: "models".
-        properties (dict - Python dictionary object containing the tool parameters, not input/output files):
-            * **hyperparameter_path** (*str*) - ("training_features/hyperparameters.xlsx") Path to the hyperparameter file.
-            * **num_thread** (*int*) - (10) The number of threads to use for the parallelization of outlier detection.
+        label (str): The path to the labels of the training set in a csv format.
+        training_output (str): ("training_results") The zip where to save the models training results. File type: output. Accepted formats: ZIP (edam:format_3989).
+        properties (dict):
+            * **num_thread** (*int*) - (50) The number of threads to search for the hyperparameter space.
             * **scaler** (*str*) - ("robust") "Choose one of the scaler available in scikit-learn, defaults to RobustScaler. Option: ("robust", "standard", "minmax").
-            * **label** (*str*) - (None) The path to the labels of the training set in a csv format.
-            * **sheets** (*str*) - (None) Names or index of the selected sheets for both features and hyperparameters and the index of the models in this format-> sheet (name, index):index model1,index model2 "
-                            without the spaces. If only index or name of the sheets, it is assumed that all kfold models
-                            are selected. It is possible to have one sheet with kfold indices but in another ones
-                            without
-            * **outliers** (*str*) - (None) A list of outliers if any, the name should be the same as in the excel file with the filtered features, you can also specify the path to a file in plain text format, each record should be in a new line
+            * **kfold_parameters** (*str*) - ("5:0.2") The parameters for the kfold in num_split:test_size format.
+            * **outliers** (*str*) - (None) A list of outliers if any, the name should be the same as in the excel file with the filtered features, you can also specify the path to a file in plain text format, each record should be in a new line.
+            * **precision_weight** (*float*) - (1) Weights to specify how relevant is the precision for the ranking of the different features.
+            * **recall_weight** (*float*) - (0.8) Weights to specify how relevant is the recall for the ranking of the different features.
+            * **class0_weight** (*float*) - (0.5) Weights to specify how relevant is the f1, precision and recall scores of the class 0 or the negative class for the ranking of the different features with respect to class 1 or the positive class.
+            * **report_weight** (*float*) - (0.25) Weights to specify how relevant is the f1, precision and recall for the ranking of the different features with respect to MCC which is a more general measures of the performance of a model.
+            * **difference_weight** (*float*) - (1.1) How important is to have similar training and test metrics.
+            * **small** (*str*) - (None) Default to true, if the number of samples is < 300 or if you machine is slow. The hyperparameters tuning will fail if you set trial time short and your machine is slow.
 
     Examples:
         This is a use example of how to use the building block from Python::
 
-            from biobb_bioml.ensemble import ensemble
-            prop = { hyperparameter_path: 'training_features/hyperparameters.xlsx', 
-                    num_thread: 10, 
-                    scaler: 'robust'}
+            from biobb_bioml.model_training import model_training
+            prop = { num_thread: 50,
+                    scaler: 'robust',
+                    kfold_parameters: '5:0.2',
+                    precision_weight: 1,
+                    recall_weight: 0.8,
+                    class0_weight: 0.5,
+                    report_weight: 0.25,
+                    difference_weight: 1.1}
                     
-            generate_mode(input_excel='training_features/selected_features.xlsx',
-                            output_model = 'models',
+            model_training(input_excel='training_features/selected_features.xlsx',
+                            label='training_features/labels.csv',
+                            training_output: 'training_results.zip',
                             properties=prop)
 
     Info:
@@ -53,7 +59,7 @@ class Generate_mode(BiobbObject):
             * name: EDAM
             * schema: http://edamontology.org/EDAM.owl
     """
-    def __init__(self, input_excel: str, output_model: str, properties: dict = None, **kwargs) -> None:
+    def __init__(self, input_excel: str, label: str, training_output: str, properties: dict = None, **kwargs) -> None:
         properties = properties or {}
 
         # Call parent class constructor
@@ -61,18 +67,21 @@ class Generate_mode(BiobbObject):
 
         # Input/Output files
         self.io_dict = {
-            "in": {"input_excel": input_excel},
-            "out": {"output_model": output_model}
+            "in": {"input_excel": input_excel, "label": label},
+            "out": {"training_output": training_output}
         }
 
         # Properties specific for BB
-        self.hyperparameter_path = properties.get('hyperparameter_path', 'training_features/hyperparameters.xlsx')
-        self.num_thread = properties.get('num_thread', 10)
-        self.scaler = properties.get('scaler', 'robust')
-        self.label = properties.get('label', None)
-        self.sheets = properties.get('sheets', None)
+        self.num_thread = properties.get('num_thread', None)
+        self.scaler = properties.get('scaler', None)
+        self.kfold_parameters = properties.get('kfold_parameters', None)
         self.outliers = properties.get('outliers', None)
-
+        self.precision_weight = properties.get('precision_weight', None)
+        self.recall_weight = properties.get('recall_weight', None)
+        self.class0_weight = properties.get('class0_weight', None)
+        self.report_weight = properties.get('report_weight', None)
+        self.difference_weight = properties.get('difference_weight', None)
+        self.small = properties.get('small', None)
 
         # Properties common in all BB
 
@@ -81,40 +90,49 @@ class Generate_mode(BiobbObject):
 
     @launchlogger
     def launch(self) -> int:
-        """Execute the :class:`generate_mode <bioml.generate_mode.generate_mode>` object."""
+        """Execute the :class:`model_training <bioml.model_training.model_training>` object."""
 
         # Setup Biobb
         if self.check_restart(): return 0
         self.stage_files()
 
-
-        if self.container_path:
-            shutil.copytree("", Path(self.stage_io_dict.get("unique_dir")).joinpath(Path("").name))
-            file1 = str(Path(self.container_volume_path).joinpath(Path(file1).name, Path(file1).name))
-
         # This is a placeholder
         fu.log('Creating command line with parameters', self.out_log, self.global_log)
-        self.cmd = ['python -m generate_mode',
-                    '--features', self.stage_io_dict["in"]["input_features"]]
+        self.cmd = ['python -m BioML.model_training',
+                    '--excel', self.stage_io_dict["in"]["input_excel"],
+                    '--label', self.stage_io_dict["in"]["label"],
+                    '--training_output', self.stage_io_dict["out"]["training_output"]]
         
-        if self.hyperparameter_path:
-            self.cmd.append('--hyperparameters')
-            self.cmd.append(self.hyperparameter_path)
         if self.num_thread:
             self.cmd.append('--num_thread')
             self.cmd.append(self.num_thread)
         if self.scaler:
             self.cmd.append('--scaler')
             self.cmd.append(self.scaler)
-        if self.label:
-            self.cmd.append('--label')
-            self.cmd.append(self.label)
-        if self.sheets:
-            self.cmd.append('--sheets')
-            self.cmd.append(self.sheets)
+        if self.kfold_parameters:
+            self.cmd.append('--kfold_parameters')
+            self.cmd.append(self.kfold_parameters)
         if self.outliers:
             self.cmd.append('--outliers')
             self.cmd.append(self.outliers)
+        if self.precision_weight:
+            self.cmd.append('--precision_weight')
+            self.cmd.append(self.precision_weight)
+        if self.recall_weight:
+            self.cmd.append('--recall_weight')
+            self.cmd.append(self.recall_weight)
+        if self.class0_weight:
+            self.cmd.append('--class0_weight')
+            self.cmd.append(self.class0_weight)
+        if self.report_weight:
+            self.cmd.append('--report_weight')
+            self.cmd.append(self.report_weight)
+        if self.difference_weight:
+            self.cmd.append('--difference_weight')
+            self.cmd.append(self.difference_weight)
+        if self.small:
+            self.cmd.append('--small')
+            self.cmd.append(self.small)
 
         # Run Biobb block
         self.run_biobb()
@@ -122,8 +140,8 @@ class Generate_mode(BiobbObject):
         # Copy files to host
         self.copy_to_host()
 
-        if self.container_path:
-            file1 = str(Path(self.stage_io_dict.get("unique_dir")).joinpath(Path(file1).name, Path(file1).name))
+        # TODO - Test may not work
+        com.create_zip(self.stage_io_dict["out"]["training_output"], self.stage_io_dict["unique_dir"])
 
         # Remove temporal files
         self.tmp_files.extend([self.stage_io_dict.get("unique_dir"), ""])
@@ -132,29 +150,30 @@ class Generate_mode(BiobbObject):
         return self.return_code
 
 
-def generate_mode(input_excel: str, output_model: str, properties: dict = None, **kwargs) -> int:
-    """Create :class:`generate_mode <bioml.generate_mode.Generate_mode>` class and
-        execute the :meth:`launch() <bioml.generate_mode.generate_mode.launch>` method."""
-    return Generate_mode(input_excel=input_excel, output_model=output_model, properties=properties, **kwargs).launch()
+def model_training(input_excel: str, label: str, training_output: str, properties: dict = None, **kwargs) -> int:
+    """Create :class:`model_training <bioml.model_training.Model_training>` class and
+        execute the :meth:`launch() <bioml.model_training.model_training.launch>` method."""
+    return Model_training(input_excel=input_excel, label=label, training_output=training_output, properties=properties, **kwargs).launch()
 
 
 def main():
     """Command line execution of this building block. Please check the command line documentation."""
-    parser = argparse.ArgumentParser(description="Wrapper for the BioMl generate_mode module.",
+    parser = argparse.ArgumentParser(description="Wrapper for the BioMl model_training module.",
                                      formatter_class=lambda prog: argparse.RawTextHelpFormatter(prog, width=99999))
     parser.add_argument('-c', '--config', required=False, help="This file can be a YAML file, JSON file or JSON string")
 
     # Specific args of each building block
     required_args = parser.add_argument_group('required arguments')
     required_args.add_argument('--input_excel', required=True)
-    required_args.add_argument('--output_model', required=True)
+    required_args.add_argument('--label', required=True)
+    required_args.add_argument('--training_output', required=True)
 
     args = parser.parse_args()
     config = args.config if args.config else None
     properties = settings.ConfReader(config=config).get_prop_dic()
 
     # Specific call of each building block
-    generate_mode(input_excel=args.input_excel, output_model=args.output_model, properties=properties)
+    model_training(input_excel=args.input_excel, label=args.label, training_output=args.training_output, properties=properties)
 
 
 if __name__ == '__main__':
