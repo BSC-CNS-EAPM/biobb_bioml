@@ -18,9 +18,10 @@ class Generate_model(BiobbObject):
     | Generate the models from the ensemble.
     
     Args:
-        input_excel (str): The file to where the selected features are saved in excel format.  File type: input. Accepted formats: XLSX (edam:format_3620)
+        input_excel (str): The file to where the selected features are saved in excel format. File type: input. Accepted formats: XLSX (edam:format_3620)
         input_hyperparameter (str): Hyperparameter file. File type: input. Accepted formats: XLSX (edam:format_3620).
         sheets (str): Names or index of the selected sheets for both features and hyperparameters and the index of the models in this format-> sheet (name, index):index model1,index model2 without the spaces. If only index or name of the sheets, it is assumed that all kfold models are selected. It is possible to have kfold indices in one sheet and in another ones without. File type: input. Accepted formats: STRING (edam:format_2560).
+        label (str): The path to the labels of the training set in a csv format. File type: input. Accepted formats: CSV (edam:format_3752).
         output_model (str): The directory for the generated models. File type: output. Accepted formats: ZIP (edam:format_3987).
         properties (dict):
             * **num_thread** (*int*) - (10) The number of threads to use for the parallelization of outlier detection.
@@ -34,12 +35,12 @@ class Generate_model(BiobbObject):
             from biobb_bioml.generate_model import generate_model
             prop = { num_thread: 10,
                     scaler: 'robust',
-                    label: 'training_features/labels.csv',
                     outliers: 'training_features/outliers.csv'}
                     
             generate_model(input_excel='training_features/selected_features.xlsx',
                             input_hyperparameter='training_features/hyperparameters.xlsx',
                             sheets='features:0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16',
+                            label='training_features/labels.csv',
                             output_model = 'models.zip',
                             properties=prop)
 
@@ -52,7 +53,7 @@ class Generate_model(BiobbObject):
             * name: EDAM
             * schema: http://edamontology.org/EDAM.owl
     """
-    def __init__(self, input_excel: str, input_hyperparameter: str, sheets: str, output_model: str, properties: dict = None, **kwargs) -> None:
+    def __init__(self, input_excel: str, input_hyperparameter: str, sheets: str, label: str, output_model: str, properties: dict = None, **kwargs) -> None:
         properties = properties or {}
 
         # Call parent class constructor
@@ -60,14 +61,13 @@ class Generate_model(BiobbObject):
 
         # Input/Output files
         self.io_dict = {
-            "in": {"input_excel": input_excel, "input_hyperparameter": input_hyperparameter, "sheets": sheets},
+            "in": {"input_excel": input_excel, "input_hyperparameter": input_hyperparameter, "sheets": sheets, "label": label},
             "out": {"output_model": output_model}
         }
 
         # Properties specific for BB
         self.num_thread = properties.get('num_thread', None)
         self.scaler = properties.get('scaler', None)
-        self.label = properties.get('label', None)
         self.outliers = properties.get('outliers', None)
 
         # Properties common in all BB
@@ -89,7 +89,8 @@ class Generate_model(BiobbObject):
                     '--excel', self.stage_io_dict["in"]["input_excel"],
                     '--hyperparameter_path', self.stage_io_dict["in"]["input_hyperparameter"],
                     '--sheets', self.stage_io_dict["in"]["sheets"],
-                    '--model_output', self.stage_io_dict["out"]["output_model"]]
+                    '--label', self.stage_io_dict["in"]["label"],
+                    '--model_output', self.stage_io_dict["out"]["output_model"].rstrip('.zip')]
 
         if self.num_thread:
             self.cmd.append('--num_thread')
@@ -97,15 +98,18 @@ class Generate_model(BiobbObject):
         if self.scaler:
             self.cmd.append('--scaler')
             self.cmd.append(self.scaler)
-        if self.label:
-            self.cmd.append('--label')
-            self.cmd.append(self.label)
         if self.outliers:
             self.cmd.append('--outliers')
             self.cmd.append(self.outliers)
 
         # Run Biobb block
         self.run_biobb()
+
+        # Zip output
+        to_zip = []
+        to_zip.append(self.stage_io_dict["out"]["output_model"].rstrip('.zip'))
+        to_zip.append(self.stage_io_dict["unique_dir"])
+        com.zip_list(self.stage_io_dict["out"]["output_model"], to_zip)
 
         # Remove temporal files
         self.tmp_files.extend([self.stage_io_dict.get("unique_dir"), ""])
@@ -114,7 +118,7 @@ class Generate_model(BiobbObject):
         return self.return_code
 
 
-def generate_model(input_excel: str, input_hyperparameter: str, sheets: str, output_model: str, properties: dict = None, **kwargs) -> int:
+def generate_model(input_excel: str, input_hyperparameter: str, sheets: str, label: str, output_model: str, properties: dict = None, **kwargs) -> int:
     """Create :class:`generate_model <bioml.generate_model.Generate_model>` class and
         execute the :meth:`launch() <bioml.generate_model.generate_model.launch>` method."""
     return Generate_model(input_excel=input_excel, input_hyperparameter=input_hyperparameter, sheets=sheets, output_model=output_model, properties=properties, **kwargs).launch()
@@ -131,6 +135,7 @@ def main():
     required_args.add_argument('--input_excel', required=True)
     required_args.add_argument('--input_hyperparameter', required=True)
     required_args.add_argument('--sheets', required=True)
+    required_args.add_argument('--label', required=True)
     required_args.add_argument('--output_model', required=True)
 
     args = parser.parse_args()
@@ -138,7 +143,7 @@ def main():
     properties = settings.ConfReader(config=config).get_prop_dic()
 
     # Specific call of each building block
-    generate_model(input_excel=args.input_excel, input_hyperparameter=args.input_hyperparameter, sheets=args.sheets, output_model=args.output_model, properties=properties)
+    generate_model(input_excel=args.input_excel, input_hyperparameter=args.input_hyperparameter, sheets=args.sheets, label=args.label, output_model=args.output_model, properties=properties)
 
 
 if __name__ == '__main__':

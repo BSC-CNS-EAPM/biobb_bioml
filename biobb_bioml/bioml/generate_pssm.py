@@ -115,8 +115,11 @@ class Generate_pssm(BiobbObject):
         # Run Biobb block
         self.run_biobb()
 
-        # TODO - Test may not work
-        com.create_zip(self.stage_io_dict["out"]["output_pssm"], self.stage_io_dict["unique_dir"])
+        # Zip output
+        to_zip = []
+        to_zip.append(self.stage_io_dict["out"]["output_pssm"].rstrip('.zip'))
+        to_zip.append(self.stage_io_dict["unique_dir"])
+        com.zip_list(self.stage_io_dict["out"]["output_pssm"], to_zip)
 
         # Remove temporal files
         self.tmp_files.extend([self.stage_io_dict.get("unique_dir"), ""])

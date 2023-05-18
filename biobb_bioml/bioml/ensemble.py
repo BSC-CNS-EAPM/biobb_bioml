@@ -20,6 +20,7 @@ class Ensemble(BiobbObject):
         input_excel (str): The file to where the selected features are saved in excel format. Accepted formats: XLSX (edam:format_3620).
         input_hyperparameter (str): Hyperparameter file. File type: input. Accepted formats: XLSX (edam:format_3620).
         sheets (str): Names or index of the selected sheets for both features and hyperparameters. File type: input. Accepted formats: STRING (edam:format_2560).
+        label (str): The path to the labels of the training set in a csv format. File type: input. Accepted formats: CSV (edam:format_3752).
         ensemble_output (str): The zip file to the output for the ensemble results. File type: output. Accepted formats: ZIP (edam:format_3987).
         properties (dict):
             * **prediction_threshold** (*float*) - (1.0) Between 0.5 and 1 and determines what considers to be a positive prediction, if 1 only those predictions where all models agrees are considered to be positive.
@@ -63,7 +64,7 @@ class Ensemble(BiobbObject):
             * name: EDAM
             * schema: http://edamontology.org/EDAM.owl
     """
-    def __init__(self, input_excel: str, input_hyperparameter: str, sheets: str, output_ensemble: str, properties: dict = None, **kwargs) -> None:
+    def __init__(self, input_excel: str, input_hyperparameter: str, sheets: str, label: str, output_ensemble: str, properties: dict = None, **kwargs) -> None:
         properties = properties or {}
 
         # Call parent class constructor
@@ -71,7 +72,7 @@ class Ensemble(BiobbObject):
 
         # Input/Output files
         self.io_dict = {
-            "in": {"input_excel": input_excel, "input_hyperparameter": input_hyperparameter, "sheets": sheets},
+            "in": {"input_excel": input_excel, "input_hyperparameter": input_hyperparameter, "sheets": sheets, "label": label},
             "out": {"output_ensemble": output_ensemble}
         }
 
@@ -108,7 +109,8 @@ class Ensemble(BiobbObject):
                     '-e', self.stage_io_dict["in"]["input_excel"],
                     '-hp', self.stage_io_dict["in"]["input_hyperparameter"],
                     '-s', self.stage_io_dict["in"]["sheets"],
-                    '-o', self.stage_io_dict["out"]["output_ensemble"]]
+                    '-l', self.stage_io_dict["in"]["label"],
+                    '-o', self.stage_io_dict["out"]["output_ensemble"].rstrip('.zip')]
 
         if self.prediction_threshold:
             self.cmd.append('--prediction_threshold')
@@ -134,9 +136,6 @@ class Ensemble(BiobbObject):
         if self.kfold_parameters:
             self.cmd.append('--kfold_parameters')
             self.cmd.append(self.kfold_parameters)
-        if self.label:
-            self.cmd.append('--label')
-            self.cmd.append(self.label)
         if self.scaler:
             self.cmd.append('--scaler')
             self.cmd.append(self.scaler)
@@ -147,8 +146,12 @@ class Ensemble(BiobbObject):
         # Run Biobb block
         self.run_biobb()
 
-        # TODO - Test may not work
-        com.create_zip(self.stage_io_dict["out"]["training_output"], self.stage_io_dict["unique_dir"])
+        # Zip the output
+        to_zip = []
+        to_zip.append(self.stage_io_dict["out"]["output_ensemble"].rstrip('.zip'))
+        to_zip.append(self.stage_io_dict["unique_dir"])
+        com.zip_list(self.stage_io_dict["out"]["output_ensemble"], to_zip)
+
 
         # Remove temporal files
         self.tmp_files.extend([self.stage_io_dict.get("unique_dir"), ""])
@@ -157,12 +160,12 @@ class Ensemble(BiobbObject):
         return self.return_code
 
 
-def ensemble(input_excel: str, input_hyperparameter_path: str, output_ensemble: str,
+def ensemble(input_excel: str, input_hyperparameter_path: str, sheets:str, label: str, output_ensemble: str,
               properties: dict = None, **kwargs) -> int:
     """Create :class:`Ensemble <bioml.ensemble.Ensemble>` class and
         execute the :meth:`launch() <bioml.ensemble.Ensemble.launch>` method."""
     return Ensemble(input_excel=input_excel, input_hyperparameter_path=input_hyperparameter_path,
-                    output_ensemble=output_ensemble, properties=properties, **kwargs).launch()
+                    sheets=sheets, output_ensemble=output_ensemble, properties=properties, **kwargs).launch()
 
 
 def main():
@@ -173,16 +176,18 @@ def main():
 
     # Specific args of each building block
     required_args = parser.add_argument_group('required arguments')
-    required_args.add_argument('-e', required=True)
-    required_args.add_argument('-hp', required=True)
-    required_args.add_argument('-o', required=True)
+    required_args.add_argument('--input_excel', required=True)
+    required_args.add_argument('--input_hyperparameter', required=True)
+    required_args.add_argument('--sheets', required=True)
+    required_args.add_argument('--label', required=True)
+    required_args.add_argument('--ensemble_output', required=True)
 
     args = parser.parse_args()
     config = args.config if args.config else None
     properties = settings.ConfReader(config=config).get_prop_dic()
 
     # Specific call of each building block
-    ensemble(input_excel=args.e, input_hyperparameter_path=args.hp, output_ensemble=args.o,
+    ensemble(input_excel=args.e, input_hyperparameter_path=args.hp, sheets=arg.sheets, output_ensemble=args.o,
             properties=properties)
 
 

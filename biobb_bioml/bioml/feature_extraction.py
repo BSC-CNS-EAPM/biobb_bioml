@@ -9,6 +9,8 @@ from biobb_common.generic.biobb_object import BiobbObject
 from biobb_common.configuration import settings
 from biobb_common.tools import file_utils as fu
 from biobb_common.tools.file_utils import launchlogger
+import zipfile
+from biobb_bioml.bioml import common as com
 
 
 class Feature_extraction(BiobbObject):
@@ -20,6 +22,8 @@ class Feature_extraction(BiobbObject):
     Args:
         input_fasta (str): The fasta file path. File type: input. Accepted formats: FASTA (edam:format_1929).
         pssm (str): The zip file with all the pssm files. File type: input. Accepted formats: ZIP (edam:format_3989).
+        every_features (str): Csv file with all the features. File type: output. Accepted formats: CSV (edam:format_3752).
+        new_features (str): Excel file with the new features. File type: output. Accepted formats: XLSX (edam:format_3754).
         properties (dict):
             * **ifeature_dir** (*str*) - ("iFeature") Path to the iFeature programme folder.
             * **possum_dir** (*str*) - ("POSSUM_Toolkit") A path to the possum programme.
@@ -55,7 +59,8 @@ class Feature_extraction(BiobbObject):
                     sheets: None }
                     
             feature_extraction(input_fasta='input.fasta',
-                            extracted_out: 'training_features.zip',
+                            every_features='every_features.csv',
+                            new_features='new_features.xlsx',
                             properties=prop)
 
     Info:
@@ -68,24 +73,34 @@ class Feature_extraction(BiobbObject):
             * schema: http://edamontology.org/EDAM.owl
     """
 
-    def __init__(self, input_fasta: str, pssm: str, properties: dict = None, **kwargs) -> None:
+    def __init__(self, input_fasta: str, every_features: str, new_features: str, pssm: str, output_zip: str, properties: dict = None, **kwargs) -> None:
         properties = properties or {}
 
         # Call parent class constructor
         super().__init__(properties)
 
+        self.extracted_out = properties.get('extracted_out', "extracted_features")
+        every_features = every_features or f"{self.extracted_out}/every_features.csv"
+        new_features = new_features or f"{self.extracted_out}/new_features.xlsx"
+
         # Input/Output files
         self.io_dict = {
             "in": {"input_fasta": input_fasta, "pssm": pssm},
-            "out": {}
+            "out": {"every_features": f"{self.extracted_out}/{every_features}",
+                    "new_features": f"{self.extracted_out}/{new_features}"}
         }
 
+        if zipfile.is_zipfile(Path(self.io_dict['in']['pssm'])):
+            self.pssm_directory = fu.create_unique_dir()
+            self.pssm_files = fu.unzip_list(Path(self.io_dict['in']['pssm']), dest_dir=self.pssm_directory)
+        else:
+            raise TypeError("Only zip files are allowed")
+
         # Properties specific for BB
-        self.ifeature_dir = properties.get('ifeature_dir', None)
-        self.possum_dir = properties.get('possum_dir', None)
+        self.ifeature_dir = properties.get('ifeature_dir', "/home/bubbles/Ruite/iFeature")
+        self.possum_dir = properties.get('possum_dir', "/home/bubbles/Ruite/POSSUM_Toolkit")
         self.ifeature_out = properties.get('ifeature_out', None)
         self.possum_out = properties.get('possum_out', None)
-        self.extracted_out = properties.get('extracted_out', None)
         self.excel = properties.get('excel', None)
         self.purpose = properties.get('purpose', None)
         self.long = properties.get('long', None)
@@ -112,7 +127,7 @@ class Feature_extraction(BiobbObject):
         fu.log('Creating command line with parameters', self.out_log, self.global_log)
         self.cmd = ['python -m BioML.feature_extraction',
                     '-i', self.stage_io_dict["in"]["input_fasta"],
-                    '-p', self.stage_io_dict["in"]["pssm"]]
+                    '-p', self.pssm_directory+'/pssm',]
 
         if self.ifeature_dir:
             self.cmd.append('--ifeature_dir')
@@ -152,7 +167,7 @@ class Feature_extraction(BiobbObject):
 
         if self.num_thread:
             self.cmd.append('--num_thread')
-            self.cmd.append(self.num_thread)
+            self.cmd.append(str(self.num_thread))
 
         if self.type:
             self.cmd.append('--type')
@@ -170,17 +185,22 @@ class Feature_extraction(BiobbObject):
         # Run Biobb block
         self.run_biobb()
 
+        # Copy to host
+        self.copy_to_host()
+
+
         # Remove temporal files
-        self.tmp_files.extend([self.stage_io_dict.get("unique_dir"), ""])
+        self.tmp_files.extend([self.stage_io_dict.get("unique_dir"), ""]) #s
+        self.tmp_files.extend(elf.pssm_directory+'/pssm')
         self.remove_tmp_files()
 
         return self.return_code
 
 
-def feature_extraction(input_fasta: str, pssm: str, properties: dict = None, **kwargs) -> int:
+def feature_extraction(input_fasta: str, pssm: str, new_features: str, every_features: str, properties: dict = None, **kwargs) -> int:
     """Create :class:`Feature_extraction <bioml.feature_extraction.Feature_extraction>` class and
         execute the :meth:`launch() <bioml.feature_extraction.Feature_extraction.launch>` method."""
-    return Feature_extraction(input_fasta=input_fasta, pssm=pssm, properties=properties, **kwargs).launch()
+    return Feature_extraction(input_fasta=input_fasta, pssm=pssm, new_features=new_features, every_features=every_features, properties=properties, **kwargs).launch()
 
 
 def main():
@@ -192,15 +212,16 @@ def main():
     # Specific args of each building block
     required_args = parser.add_argument_group('required arguments')
     required_args.add_argument('--input_fasta', required=True)
-    required_args.add_argument('--psmm', required=True)
+    required_args.add_argument('--pssm', required=True)
+    required_args.add_argument('--new_features', required=False)
+    required_args.add_argument('--every_features', required=False)
 
     args = parser.parse_args()
     config = args.config if args.config else None
     properties = settings.ConfReader(config=config).get_prop_dic()
-    print(f"Properties: {properties}")
 
     # Specific call of each building block
-    feature_extraction(input_fasta=args.input_fasta, psmm=args.pssm, properties=properties)
+    feature_extraction(input_fasta=args.input_fasta, pssm=args.pssm, new_features=args.new_features, every_features=args.every_features, output_zip=args.output_zip, properties=properties)
 
 
 if __name__ == '__main__':

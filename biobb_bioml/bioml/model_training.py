@@ -13,12 +13,13 @@ from biobb_bioml.bioml import common as com
 class Model_training(BiobbObject):
     """
     | biobb_bioml Model training
-    | Wrapper class for the `bioml Model training module.
+    | Wrapper class for the bioml Model training module.
     | Train the models.
 
     Args:
-        input_excel (str): The file to where the selected features are saved in excel format.
-        label (str): The path to the labels of the training set in a csv format.
+        input_excel (str): The file to where the selected features are saved in excel format. File type: input. Accepted formats: xlsx (edam:format_3620).
+        label (str): The path to the labels of the training set in a csv format. File type: input. Accepted formats: csv (edam:format_3752).
+        hyperparameters (str): The path to the hyperparameters of the training set in a csv format. File type: output. Accepted formats: xlsx (edam:format_3620).
         training_output (str): ("training_results") The zip where to save the models training results. File type: output. Accepted formats: ZIP (edam:format_3989).
         properties (dict):
             * **num_thread** (*int*) - (50) The number of threads to search for the hyperparameter space.
@@ -59,16 +60,18 @@ class Model_training(BiobbObject):
             * name: EDAM
             * schema: http://edamontology.org/EDAM.owl
     """
-    def __init__(self, input_excel: str, label: str, training_output: str, properties: dict = None, **kwargs) -> None:
+    def __init__(self, input_excel: str, label: str, hyperparameters: str, training_output: str, properties: dict = None, **kwargs) -> None:
         properties = properties or {}
 
         # Call parent class constructor
         super().__init__(properties)
 
+        hyperparameters = hyperparameters or "training_results/hyperparameters.xlsx"
+
         # Input/Output files
         self.io_dict = {
             "in": {"input_excel": input_excel, "label": label},
-            "out": {"training_output": training_output}
+            "out": {"training_output": training_output, "hyperparameters": hyperparameters}
         }
 
         # Properties specific for BB
@@ -101,11 +104,11 @@ class Model_training(BiobbObject):
         self.cmd = ['python -m BioML.model_training',
                     '--excel', self.stage_io_dict["in"]["input_excel"],
                     '--label', self.stage_io_dict["in"]["label"],
-                    '--training_output', self.stage_io_dict["out"]["training_output"]]
+                    '--training_output', self.stage_io_dict["out"]["training_output"].rstrip('.zip')]
         
         if self.num_thread:
             self.cmd.append('--num_thread')
-            self.cmd.append(self.num_thread)
+            self.cmd.append(str(self.num_thread))
         if self.scaler:
             self.cmd.append('--scaler')
             self.cmd.append(self.scaler)
@@ -114,7 +117,7 @@ class Model_training(BiobbObject):
             self.cmd.append(self.kfold_parameters)
         if self.outliers:
             self.cmd.append('--outliers')
-            self.cmd.append(self.outliers)
+            self.cmd.append(str(self.outliers))
         if self.precision_weight:
             self.cmd.append('--precision_weight')
             self.cmd.append(self.precision_weight)
@@ -140,8 +143,11 @@ class Model_training(BiobbObject):
         # Copy files to host
         self.copy_to_host()
 
-        # TODO - Test may not work
-        com.create_zip(self.stage_io_dict["out"]["training_output"], self.stage_io_dict["unique_dir"])
+        # Zip output
+        to_zip = []
+        to_zip.append(self.stage_io_dict["out"]["training_output"])
+        to_zip.append(self.stage_io_dict["unique_dir"])
+        com.zip_list(self.stage_io_dict["out"]["training_output"], to_zip)
 
         # Remove temporal files
         self.tmp_files.extend([self.stage_io_dict.get("unique_dir"), ""])
@@ -150,10 +156,10 @@ class Model_training(BiobbObject):
         return self.return_code
 
 
-def model_training(input_excel: str, label: str, training_output: str, properties: dict = None, **kwargs) -> int:
+def model_training(input_excel: str, label: str, hyperparameters: str, training_output: str, properties: dict = None, **kwargs) -> int:
     """Create :class:`model_training <bioml.model_training.Model_training>` class and
         execute the :meth:`launch() <bioml.model_training.model_training.launch>` method."""
-    return Model_training(input_excel=input_excel, label=label, training_output=training_output, properties=properties, **kwargs).launch()
+    return Model_training(input_excel=input_excel, label=label, hyperparameters=hyperparameters, training_output=training_output, properties=properties, **kwargs).launch()
 
 
 def main():
@@ -166,6 +172,7 @@ def main():
     required_args = parser.add_argument_group('required arguments')
     required_args.add_argument('--input_excel', required=True)
     required_args.add_argument('--label', required=True)
+    required_args.add_argument('--hyperparameters', required=False)
     required_args.add_argument('--training_output', required=True)
 
     args = parser.parse_args()
@@ -173,7 +180,7 @@ def main():
     properties = settings.ConfReader(config=config).get_prop_dic()
 
     # Specific call of each building block
-    model_training(input_excel=args.input_excel, label=args.label, training_output=args.training_output, properties=properties)
+    model_training(input_excel=args.input_excel, label=args.label, hyperparameters=args.hyperparameters, training_output=args.training_output, properties=properties)
 
 
 if __name__ == '__main__':

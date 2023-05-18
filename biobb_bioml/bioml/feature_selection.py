@@ -21,7 +21,8 @@ class Feature_selection(BiobbObject):
     Args:
         input_features (str): The path to the training features that contains both ifeature and possum in csv format. File type: input. Accepted formats: CSV (edam:format_3752).
         label (str): The path to the labels of the training set in a csv format if not in the features, if present in the features csv use the flag to specify the label column name. File type: input. Accepted formats: CSV (edam:format_3752).
-        output_excel (str): The file path to where the selected features will be saved in excel format. File type: output. Accepted formats. Accepted formats: XLSX (edam:format_3620).
+        output_excel (str): The file path to where the selected features will be saved in excel format. File type: output. Accepted formats: XLSX (edam:format_3620).
+        output_zip (str): A zip file with the extra parameters. File type: output. Accepted formats: ZIP (edam:format_3987).
         properties (dict):
             * **feature_range** (*str*) - ("20:none:10") Specify the minimum and maximum of number of features in start:stop:step format or a single integer. Stop can be none then the default value will be (n_samples / 2)".
             * **num_thread** (*int*) - (10) The number of threads to use for parallelizing the feature selection.
@@ -60,16 +61,18 @@ class Feature_selection(BiobbObject):
             * name: EDAM
             * schema: http://edamontology.org/EDAM.owl
     """
-    def __init__(self, input_features: str, label: str, output_excel: str, properties: dict = None, **kwargs) -> None:
+    def __init__(self, input_features: str, label: str, output_excel: str, output_zip: str, properties: dict = None, **kwargs) -> None:
         properties = properties or {}
 
         # Call parent class constructor
         super().__init__(properties)
 
+        input_features = input_features or f"training_features/every_features.csv"
+
         # Input/Output files
         self.io_dict = {
             "in": {"input_features": input_features, "label": label},
-            "out": {"output_excel": output_excel}
+            "out": {"output_excel": output_excel, "output_zip": output_zip}
         }
 
         # Properties specific for BB
@@ -100,7 +103,7 @@ class Feature_selection(BiobbObject):
         fu.log('Creating command line with parameters', self.out_log, self.global_log)
         self.cmd = ['python -m BioML.feature_selection',
                     '--features', self.stage_io_dict["in"]["input_features"],
-                    '--label', self.stage_io_dict["label"]["label"],
+                    '--label', self.stage_io_dict["in"]["label"],
                     '--excel', self.stage_io_dict["out"]["output_excel"]]
 
         if self.feature_range:
@@ -125,6 +128,12 @@ class Feature_selection(BiobbObject):
         # Run Biobb block
         self.run_biobb()
 
+        # Zip output
+        to_zip = []
+        to_zip.append(self.stage_io_dict["unique_dir"])
+        com.zip_list(self.stage_io_dict["out"]["output_zip"], to_zip)
+
+
         # Remove temporal files
         self.tmp_files.extend([self.stage_io_dict.get("unique_dir"), ""])
         self.remove_tmp_files()
@@ -132,10 +141,10 @@ class Feature_selection(BiobbObject):
         return self.return_code
 
 
-def feature_selection(input_features: str, label: str, output_excel: str, properties: dict = None, **kwargs) -> int:
+def feature_selection(input_features: str, label: str, output_excel: str, output_zip: str, properties: dict = None, **kwargs) -> int:
     """Create :class:`feature_selection <bioml.feature_selection.Feature_selection>` class and
         execute the :meth:`launch() <bioml.feature_selection.feature_selection.launch>` method."""
-    return Feature_selection(input_features=input_features, label=label, output_excel=output_excel, properties=properties, **kwargs).launch()
+    return Feature_selection(input_features=input_features, label=label, output_excel=output_excel, output_zip=output_zip, properties=properties, **kwargs).launch()
 
 
 def main():
@@ -149,13 +158,14 @@ def main():
     required_args.add_argument('--input_features', required=True)
     required_args.add_argument('--label', required=True)
     required_args.add_argument('--output_excel', required=True)
+    required_args.add_argument('--output_zip', required=False)
 
     args = parser.parse_args()
     config = args.config if args.config else None
     properties = settings.ConfReader(config=config).get_prop_dic()
 
     # Specific call of each building block
-    feature_selection(input_features=args.input_features, label=args.label, output_excel=args.output_excel, properties=properties)
+    feature_selection(input_features=args.input_features, label=args.label, output_excel=args.output_excel, output_zip=args.output_zip, properties=properties)
 
 
 if __name__ == '__main__':

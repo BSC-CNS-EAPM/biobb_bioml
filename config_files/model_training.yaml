@@ -1,0 +1,3 @@
+num_thread: 40
+outliers: ["EH46(23)", "EH75(16)"]
+hp: "50:none"

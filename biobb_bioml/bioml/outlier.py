@@ -16,9 +16,9 @@ class Outlier(BiobbObject):
     | Detect outliers from the selected features.
 
     Args:
-        input_excel (str): The file to where the selected features are saved in excel format.  File type: input. Accepted formats: XLSX (edam:format_3620).
+        input_excel (str): The file to where the selected features are saved in excel format. File type: input. Accepted formats: XLSX (edam:format_3620).
         output_outlier (str): The path to the output for the outliers. File type: output. Accepted formats: CSV (edam:format_3752).
-        properties (dict - Python dictionary object containing the tool parameters, not input/output files):
+        properties (dict):
             * **num_thread** (*int*) - (10) The number of threads to use for the parallelization of outlier detection.
             * **scaler** (*str*) - ("robust") "Choose one of the scaler available in scikit-learn, defaults to RobustScaler. Option: ("robust", "standard", "minmax").
             * **contamination** (*float*) - (0.06) The expected % of outliers.
@@ -51,10 +51,12 @@ class Outlier(BiobbObject):
         # Call parent class constructor
         super().__init__(properties)
 
+        output_outlier = output_outlier or "training_results/outliers.csv"
+
         # Input/Output files
         self.io_dict = {
             "in": {"input_excel": input_excel},
-            "out": {"output_model": output_outlier}
+            "out": {"output_outlier": output_outlier}
         }
 
         # Properties specific for BB
@@ -82,7 +84,7 @@ class Outlier(BiobbObject):
 
         if self.num_thread:
             self.cmd.append('--num_thread')
-            self.cmd.append(self.num_thread)
+            self.cmd.append(str(self.num_thread))
         if self.scaler:
             self.cmd.append('--scaler')
             self.cmd.append(self.scaler)
@@ -108,7 +110,7 @@ def outlier(input_excel: str, output_outlier: str, properties: dict = None, **kw
 
 def main():
     """Command line execution of this building block. Please check the command line documentation."""
-    parser = argparse.ArgumentParser(description="Wrapper for the BioMl genera_model module.",
+    parser = argparse.ArgumentParser(description="Wrapper for the BioMl outlier module.",
                                      formatter_class=lambda prog: argparse.RawTextHelpFormatter(prog, width=99999))
     parser.add_argument('-c', '--config', required=False, help="This file can be a YAML file, JSON file or JSON string")
 
