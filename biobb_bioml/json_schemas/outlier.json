@@ -1,0 +1,81 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://bioexcel.eu/biobb_bioml/json_schemas/1.0/outlier",
+    "name": "biobb_bioml Outlier",
+    "title": "Wrapper class for the bioml Outlier module.",
+    "description": "Detect outliers from the selected features.",
+    "type": "object",
+    "info": {
+        "wrapped_software": {
+            "name": "BioMl outlier model",
+            "version": ">0.1",
+            "license": "LGPL 2.1"
+        },
+        "ontology": {
+            "name": "EDAM",
+            "schema": "http://edamontology.org/EDAM.owl"
+        }
+    },
+    "required": [
+        "input_excel",
+        "output_outlier"
+    ],
+    "properties": {
+        "input_excel": {
+            "type": "string",
+            "description": "The file to where the selected features are saved in excel format",
+            "filetype": "input",
+            "sample": null,
+            "enum": [
+                ".*\\.XLSX$"
+            ],
+            "file_formats": [
+                {
+                    "extension": ".*\\.XLSX$",
+                    "description": "The file to where the selected features are saved in excel format",
+                    "edam": "format_3620"
+                }
+            ]
+        },
+        "output_outlier": {
+            "type": "string",
+            "description": "The path to the output for the outliers",
+            "filetype": "output",
+            "sample": null,
+            "enum": [
+                ".*\\.CSV$"
+            ],
+            "file_formats": [
+                {
+                    "extension": ".*\\.CSV$",
+                    "description": "The path to the output for the outliers",
+                    "edam": "format_3752"
+                }
+            ]
+        },
+        "properties": {
+            "type": "object",
+            "properties": {
+                "num_thread": {
+                    "type": "integer",
+                    "default": 10,
+                    "wf_prop": false,
+                    "description": "The number of threads to use for the parallelization of outlier detection."
+                },
+                "scaler": {
+                    "type": "string",
+                    "default": "robust",
+                    "wf_prop": false,
+                    "description": "\"Choose one of the scaler available in scikit-learn, defaults to RobustScaler. Option: (\"robust\", \"standard\", \"minmax\")."
+                },
+                "contamination": {
+                    "type": "number",
+                    "default": 0.06,
+                    "wf_prop": false,
+                    "description": "The expected % of outliers."
+                }
+            }
+        }
+    },
+    "additionalProperties": false
+}

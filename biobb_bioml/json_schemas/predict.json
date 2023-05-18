@@ -1,0 +1,127 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://bioexcel.eu/biobb_bioml/json_schemas/1.0/predict",
+    "name": "biobb_bioml Predict",
+    "title": "Wrapper class for the bioml Predict module.",
+    "description": "Predict using the models and average the votations.",
+    "type": "object",
+    "info": {
+        "wrapped_software": {
+            "name": "BioMl predict",
+            "version": ">0.1",
+            "license": "LGPL 2.1"
+        },
+        "ontology": {
+            "name": "EDAM",
+            "schema": "http://edamontology.org/EDAM.owl"
+        }
+    },
+    "required": [
+        "input_excel",
+        "input_fasta",
+        "extracted",
+        "prediction_results"
+    ],
+    "properties": {
+        "input_excel": {
+            "type": "string",
+            "description": "The file to where the selected features are saved in excel format",
+            "filetype": "input",
+            "sample": null,
+            "enum": [
+                ".*\\.XLSX$"
+            ],
+            "file_formats": [
+                {
+                    "extension": ".*\\.XLSX$",
+                    "description": "The file to where the selected features are saved in excel format",
+                    "edam": "format_3620"
+                }
+            ]
+        },
+        "input_fasta": {
+            "type": "string",
+            "description": "The fasta file path",
+            "filetype": "input",
+            "sample": null,
+            "enum": [
+                ".*\\.FASTA$"
+            ],
+            "file_formats": [
+                {
+                    "extension": ".*\\.FASTA$",
+                    "description": "The fasta file path",
+                    "edam": "format_1929"
+                }
+            ]
+        },
+        "extracted": {
+            "type": "string",
+            "description": "The file where the extracted features from the new data are stored",
+            "filetype": "input",
+            "sample": null,
+            "enum": [
+                ".*\\.XLSX$"
+            ],
+            "file_formats": [
+                {
+                    "extension": ".*\\.XLSX$",
+                    "description": "The file where the extracted features from the new data are stored",
+                    "edam": "format_3620"
+                }
+            ]
+        },
+        "prediction_results": {
+            "type": "string",
+            "description": "The zip file where the extracted features from the new data are stored",
+            "filetype": "output",
+            "sample": null,
+            "enum": [
+                ".*\\.ZIP$"
+            ],
+            "file_formats": [
+                {
+                    "extension": ".*\\.ZIP$",
+                    "description": "The zip file where the extracted features from the new data are stored",
+                    "edam": "format_3987"
+                }
+            ]
+        },
+        "properties": {
+            "type": "object",
+            "properties": {
+                "scaler": {
+                    "type": "string",
+                    "default": "robust",
+                    "wf_prop": false,
+                    "description": "Choose one of the scaler available in scikit-learn, defaults to RobustScaler."
+                },
+                "model_output": {
+                    "type": "string",
+                    "default": "models",
+                    "wf_prop": false,
+                    "description": "The directory for the generated models."
+                },
+                "prediction_threshold": {
+                    "type": "number",
+                    "default": 1.0,
+                    "wf_prop": false,
+                    "description": "Between 0.5 and 1 and determines what considers to be a positive prediction, if 1 only those predictions where all models agrees are considered to be positive."
+                },
+                "extracted": {
+                    "type": "string",
+                    "default": "extracted_features/new_features.xlsx",
+                    "wf_prop": false,
+                    "description": "The file where the extracted features from the new data are stored."
+                },
+                "number_similar_samples": {
+                    "type": "integer",
+                    "default": 1,
+                    "wf_prop": false,
+                    "description": "The number of similar training samples to filter the predictions."
+                }
+            }
+        }
+    },
+    "additionalProperties": false
+}

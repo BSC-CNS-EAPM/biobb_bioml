@@ -1,0 +1,175 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://bioexcel.eu/biobb_bioml/json_schemas/1.0/feature_extraction",
+    "name": "biobb_bioml Feature extraction",
+    "title": "Wrapper class for the bioml Feature extraction module.",
+    "description": "Extract features using possum and ifeatures.",
+    "type": "object",
+    "info": {
+        "wrapped_software": {
+            "name": "BioMl feature extraction",
+            "version": ">0.1",
+            "license": "LGPL 2.1"
+        },
+        "ontology": {
+            "name": "EDAM",
+            "schema": "http://edamontology.org/EDAM.owl"
+        }
+    },
+    "required": [
+        "input_fasta",
+        "pssm",
+        "every_features",
+        "new_features"
+    ],
+    "properties": {
+        "input_fasta": {
+            "type": "string",
+            "description": "The fasta file path",
+            "filetype": "input",
+            "sample": null,
+            "enum": [
+                ".*\\.FASTA$"
+            ],
+            "file_formats": [
+                {
+                    "extension": ".*\\.FASTA$",
+                    "description": "The fasta file path",
+                    "edam": "format_1929"
+                }
+            ]
+        },
+        "pssm": {
+            "type": "string",
+            "description": "The zip file with all the pssm files",
+            "filetype": "input",
+            "sample": null,
+            "enum": [
+                ".*\\.ZIP$"
+            ],
+            "file_formats": [
+                {
+                    "extension": ".*\\.ZIP$",
+                    "description": "The zip file with all the pssm files",
+                    "edam": "format_3989"
+                }
+            ]
+        },
+        "every_features": {
+            "type": "string",
+            "description": "Csv file with all the features",
+            "filetype": "output",
+            "sample": null,
+            "enum": [
+                ".*\\.CSV$"
+            ],
+            "file_formats": [
+                {
+                    "extension": ".*\\.CSV$",
+                    "description": "Csv file with all the features",
+                    "edam": "format_3752"
+                }
+            ]
+        },
+        "new_features": {
+            "type": "string",
+            "description": "Excel file with the new features",
+            "filetype": "output",
+            "sample": null,
+            "enum": [
+                ".*\\.XLSX$"
+            ],
+            "file_formats": [
+                {
+                    "extension": ".*\\.XLSX$",
+                    "description": "Excel file with the new features",
+                    "edam": "format_3754"
+                }
+            ]
+        },
+        "properties": {
+            "type": "object",
+            "properties": {
+                "ifeature_dir": {
+                    "type": "string",
+                    "default": "iFeature",
+                    "wf_prop": false,
+                    "description": "Path to the iFeature programme folder."
+                },
+                "possum_dir": {
+                    "type": "string",
+                    "default": "POSSUM_Toolkit",
+                    "wf_prop": false,
+                    "description": "A path to the possum programme."
+                },
+                "ifeature_out": {
+                    "type": "string",
+                    "default": "ifeature_features",
+                    "wf_prop": false,
+                    "description": "The directory where the ifeature features are."
+                },
+                "possum_out": {
+                    "type": "string",
+                    "default": "possum_features",
+                    "wf_prop": false,
+                    "description": "The directory for the possum extractions."
+                },
+                "extracted_out": {
+                    "type": "string",
+                    "default": "extracted_features",
+                    "wf_prop": false,
+                    "description": "The directory for the extracted features from the new data or from the training data."
+                },
+                "excel": {
+                    "type": "string",
+                    "default": "training_features/selected_features.xlsx",
+                    "wf_prop": false,
+                    "description": "The path to where the selected features from training are saved in excel format, it will be used to select specific columns from all the generated features for the new data"
+                },
+                "purpose": {
+                    "type": "string",
+                    "default": "extract",
+                    "wf_prop": false,
+                    "description": "Choose the operation between extracting reading for training or filtering for prediction, (\"extract\", \"read\", \"filter\")."
+                },
+                "long": {
+                    "type": "string",
+                    "default": "False",
+                    "wf_prop": false,
+                    "description": "True when restarting from the long commands."
+                },
+                "run": {
+                    "type": "string",
+                    "default": "both",
+                    "wf_prop": false,
+                    "description": "Run possum or ifeature extraction, (\"possum\", \"ifeature\", \"both\")."
+                },
+                "num_thread": {
+                    "type": "integer",
+                    "default": 100,
+                    "wf_prop": false,
+                    "description": "The number of threads to use for the generation of pssm profiles."
+                },
+                "type": {
+                    "type": "string",
+                    "default": "all",
+                    "wf_prop": false,
+                    "description": "A list of the features to extract, (\"all\", \"APAAC\", \"PAAC\", \"CKSAAGP\",\"Moran\", \"Geary\", \"NMBroto\", \"CTDC\", \"CTDT\", \"CTDD\", \"CTriad\", \"GDPC\", \"GTPC\", \"QSOrder\", \"SOCNumber\", \"GAAC\", \"KSCtriad\", \"aac_pssm\", \"ab_pssm\", \"d_fpssm\", \"dp_pssm\", \"dpc_pssm\", \"edp\", \"eedp\", \"rpm_pssm\", \"k_separated_bigrams_pssm\", \"pssm_ac\", \"pssm_cc\", \"pssm_composition\", \"rpssm\", \"s_fpssm\", \"smoothed_pssm:5\", \"smoothed_pssm:7\", \"smoothed_pssm:9\", \"tpc\", \"tri_gram_pssm\", \"pse_pssm:1\", \"pse_pssm:2\", \"pse_pssm:3\")."
+                },
+                "type_file": {
+                    "type": "string",
+                    "default": null,
+                    "wf_prop": false,
+                    "description": "The path to the type file with the feature names."
+                },
+                "sheets": {
+                    "type": "string",
+                    "default": null,
+                    "wf_prop": false,
+                    "description": "Names or index of the selected sheets from the features and the index of the models in this format-> sheet (name, index):index model1,index model2 without the spaces. If only index or name of the sheets, it is assumed that all kfold models are selected. It is possible to have one sheet with kfold indices but in another ones without."
+                }
+            }
+        }
+    },
+    "additionalProperties": false
+}

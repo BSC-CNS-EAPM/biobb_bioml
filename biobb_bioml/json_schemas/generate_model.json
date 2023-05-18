@@ -1,0 +1,138 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://bioexcel.eu/biobb_bioml/json_schemas/1.0/generate_model",
+    "name": "biobb_bioml Generate model",
+    "title": "Wrapper class for the bioml Generate model module.",
+    "description": "Generate the models from the ensemble.",
+    "type": "object",
+    "info": {
+        "wrapped_software": {
+            "name": "BioMl generate model",
+            "version": ">0.1",
+            "license": "LGPL 2.1"
+        },
+        "ontology": {
+            "name": "EDAM",
+            "schema": "http://edamontology.org/EDAM.owl"
+        }
+    },
+    "required": [
+        "input_excel",
+        "input_hyperparameter",
+        "sheets",
+        "label",
+        "output_model"
+    ],
+    "properties": {
+        "input_excel": {
+            "type": "string",
+            "description": "The file to where the selected features are saved in excel format",
+            "filetype": "input",
+            "sample": null,
+            "enum": [
+                ".*\\.XLSX$"
+            ],
+            "file_formats": [
+                {
+                    "extension": ".*\\.XLSX$",
+                    "description": "The file to where the selected features are saved in excel format",
+                    "edam": "format_3620"
+                }
+            ]
+        },
+        "input_hyperparameter": {
+            "type": "string",
+            "description": "Hyperparameter file",
+            "filetype": "input",
+            "sample": null,
+            "enum": [
+                ".*\\.XLSX$"
+            ],
+            "file_formats": [
+                {
+                    "extension": ".*\\.XLSX$",
+                    "description": "Hyperparameter file",
+                    "edam": "format_3620"
+                }
+            ]
+        },
+        "sheets": {
+            "type": "string",
+            "description": "Names or index of the selected sheets for both features and hyperparameters and the index of the models in this format-> sheet (name, index):index model1,index model2 without the spaces. If only index or name of the sheets, it is assumed that all kfold models are selected. It is possible to have kfold indices in one sheet and in another ones without",
+            "filetype": "input",
+            "sample": null,
+            "enum": [
+                ".*\\.STRING$"
+            ],
+            "file_formats": [
+                {
+                    "extension": ".*\\.STRING$",
+                    "description": "Names or index of the selected sheets for both features and hyperparameters and the index of the models in this format-> sheet (name, index):index model1,index model2 without the spaces. If only index or name of the sheets, it is assumed that all kfold models are selected. It is possible to have kfold indices in one sheet and in another ones without",
+                    "edam": "format_2560"
+                }
+            ]
+        },
+        "label": {
+            "type": "string",
+            "description": "The path to the labels of the training set in a csv format",
+            "filetype": "input",
+            "sample": null,
+            "enum": [
+                ".*\\.CSV$"
+            ],
+            "file_formats": [
+                {
+                    "extension": ".*\\.CSV$",
+                    "description": "The path to the labels of the training set in a csv format",
+                    "edam": "format_3752"
+                }
+            ]
+        },
+        "output_model": {
+            "type": "string",
+            "description": "The directory for the generated models",
+            "filetype": "output",
+            "sample": null,
+            "enum": [
+                ".*\\.ZIP$"
+            ],
+            "file_formats": [
+                {
+                    "extension": ".*\\.ZIP$",
+                    "description": "The directory for the generated models",
+                    "edam": "format_3987"
+                }
+            ]
+        },
+        "properties": {
+            "type": "object",
+            "properties": {
+                "num_thread": {
+                    "type": "integer",
+                    "default": 10,
+                    "wf_prop": false,
+                    "description": "The number of threads to use for the parallelization of outlier detection."
+                },
+                "scaler": {
+                    "type": "string",
+                    "default": "robust",
+                    "wf_prop": false,
+                    "description": "Choose one of the scaler available in scikit-learn, defaults to RobustScaler."
+                },
+                "label": {
+                    "type": "string",
+                    "default": null,
+                    "wf_prop": false,
+                    "description": "The path to the labels of the training set in a csv format."
+                },
+                "outliers": {
+                    "type": "string",
+                    "default": null,
+                    "wf_prop": false,
+                    "description": "A list of outliers if any, the name should be the same as in the excel file with the filtered features, you can also specify the path to a file in plain text format, each record should be in a new line."
+                }
+            }
+        }
+    },
+    "additionalProperties": false
+}

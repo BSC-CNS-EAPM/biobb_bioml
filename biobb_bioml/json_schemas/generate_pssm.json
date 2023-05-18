@@ -1,0 +1,99 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://bioexcel.eu/biobb_bioml/json_schemas/1.0/generate_pssm",
+    "name": "biobb_bioml Generate pssm",
+    "title": "Wrapper class for the `bioml Generate pssm module.",
+    "description": "Creates a database and performs psiblast.",
+    "type": "object",
+    "info": {
+        "wrapped_software": {
+            "name": "BioMl generate pssm",
+            "version": ">0.1",
+            "license": "LGPL 2.1"
+        },
+        "ontology": {
+            "name": "EDAM",
+            "schema": "http://edamontology.org/EDAM.owl"
+        }
+    },
+    "required": [
+        "input_fasta",
+        "output_pssm"
+    ],
+    "properties": {
+        "input_fasta": {
+            "type": "string",
+            "description": "The fasta file",
+            "filetype": "input",
+            "sample": null,
+            "enum": [
+                ".*\\.FASTA$"
+            ],
+            "file_formats": [
+                {
+                    "extension": ".*\\.FASTA$",
+                    "description": "The fasta file",
+                    "edam": "format_1929"
+                }
+            ]
+        },
+        "output_pssm": {
+            "type": "string",
+            "description": "A zip file containing the pssm files",
+            "filetype": "output",
+            "sample": null,
+            "enum": [
+                ".*\\.ZIP$"
+            ],
+            "file_formats": [
+                {
+                    "extension": ".*\\.ZIP$",
+                    "description": "A zip file containing the pssm files",
+                    "edam": "format_3989"
+                }
+            ]
+        },
+        "properties": {
+            "type": "object",
+            "properties": {
+                "dbinp": {
+                    "type": "string",
+                    "default": null,
+                    "wf_prop": false,
+                    "description": "The path to the fasta files to create the database."
+                },
+                "dbout": {
+                    "type": "string",
+                    "default": "database/uniref50",
+                    "wf_prop": false,
+                    "description": "The name for the created database."
+                },
+                "num_thread": {
+                    "type": "integer",
+                    "default": 100,
+                    "wf_prop": false,
+                    "description": "The number of threads to use for the generation of pssm profiles."
+                },
+                "number": {
+                    "type": "string",
+                    "default": "*",
+                    "wf_prop": false,
+                    "description": "A number for the files."
+                },
+                "iterations": {
+                    "type": "integer",
+                    "default": 3,
+                    "wf_prop": false,
+                    "description": "The number of iterations in PSIBlast."
+                },
+                "possum_dir": {
+                    "type": "string",
+                    "default": "POSSUM_Toolkit",
+                    "wf_prop": false,
+                    "description": "A path to the possum programme."
+                }
+            }
+        }
+    },
+    "additionalProperties": false
+}

@@ -1,0 +1,151 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://bioexcel.eu/biobb_bioml/json_schemas/1.0/feature_selection",
+    "name": "biobb_bioml Feature selection",
+    "title": "Wrapper class for the bioml Feature selection module.",
+    "description": "Preprocess and Select the best features.",
+    "type": "object",
+    "info": {
+        "wrapped_software": {
+            "name": "BioMl feature selection",
+            "version": ">0.1",
+            "license": "LGPL 2.1"
+        },
+        "ontology": {
+            "name": "EDAM",
+            "schema": "http://edamontology.org/EDAM.owl"
+        }
+    },
+    "required": [
+        "input_features",
+        "label",
+        "output_excel",
+        "output_zip"
+    ],
+    "properties": {
+        "input_features": {
+            "type": "string",
+            "description": "The path to the training features that contains both ifeature and possum in csv format",
+            "filetype": "input",
+            "sample": null,
+            "enum": [
+                ".*\\.CSV$"
+            ],
+            "file_formats": [
+                {
+                    "extension": ".*\\.CSV$",
+                    "description": "The path to the training features that contains both ifeature and possum in csv format",
+                    "edam": "format_3752"
+                }
+            ]
+        },
+        "label": {
+            "type": "string",
+            "description": "The path to the labels of the training set in a csv format if not in the features, if present in the features csv use the flag to specify the label column name",
+            "filetype": "input",
+            "sample": null,
+            "enum": [
+                ".*\\.CSV$"
+            ],
+            "file_formats": [
+                {
+                    "extension": ".*\\.CSV$",
+                    "description": "The path to the labels of the training set in a csv format if not in the features, if present in the features csv use the flag to specify the label column name",
+                    "edam": "format_3752"
+                }
+            ]
+        },
+        "output_excel": {
+            "type": "string",
+            "description": "The file path to where the selected features will be saved in excel format",
+            "filetype": "output",
+            "sample": null,
+            "enum": [
+                ".*\\.XLSX$"
+            ],
+            "file_formats": [
+                {
+                    "extension": ".*\\.XLSX$",
+                    "description": "The file path to where the selected features will be saved in excel format",
+                    "edam": "format_3620"
+                }
+            ]
+        },
+        "output_zip": {
+            "type": "string",
+            "description": "A zip file with the extra parameters",
+            "filetype": "output",
+            "sample": null,
+            "enum": [
+                ".*\\.ZIP$"
+            ],
+            "file_formats": [
+                {
+                    "extension": ".*\\.ZIP$",
+                    "description": "A zip file with the extra parameters",
+                    "edam": "format_3987"
+                }
+            ]
+        },
+        "properties": {
+            "type": "object",
+            "properties": {
+                "feature_range": {
+                    "type": "string",
+                    "default": "20:none:10",
+                    "wf_prop": false,
+                    "description": "Specify the minimum and maximum of number of features in start:stop:step format or a single integer. Stop can be none then the default value will be (n_samples / 2)\"."
+                },
+                "num_thread": {
+                    "type": "integer",
+                    "default": 10,
+                    "wf_prop": false,
+                    "description": "The number of threads to use for parallelizing the feature selection."
+                },
+                "variance_threshold": {
+                    "type": "number",
+                    "default": 7.0,
+                    "wf_prop": false,
+                    "description": "It will influence the features to be eliminated the larger the less restrictive."
+                },
+                "scaler": {
+                    "type": "string",
+                    "default": "robust",
+                    "wf_prop": false,
+                    "description": "Choose one of the scaler available in scikit-learn, defaults to RobustScaler. Options: (\"robust\", \"standard\", \"minmax\")."
+                },
+                "kfold_parameters": {
+                    "type": "string",
+                    "default": "5:0.2",
+                    "wf_prop": false,
+                    "description": "The parameters for the kfold in num_split:test_size format."
+                },
+                "rfe_steps": {
+                    "type": "integer",
+                    "default": 40,
+                    "wf_prop": false,
+                    "description": "The number of steps for the RFE algorithm, the more step the more precise but also more time consuming be used to select specific columns from all the generated features for the new data."
+                },
+                "plot": {
+                    "type": "boolean",
+                    "default": true,
+                    "wf_prop": false,
+                    "description": "Default to true, plot the feature importance using shap."
+                },
+                "plot_num_features": {
+                    "type": "integer",
+                    "default": 20,
+                    "wf_prop": false,
+                    "description": "How many features to include in the plot."
+                },
+                "num_filters": {
+                    "type": "integer",
+                    "default": 10,
+                    "wf_prop": false,
+                    "description": "The number univariate filters to use maximum 10\"."
+                }
+            }
+        }
+    },
+    "additionalProperties": false
+}

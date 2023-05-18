@@ -1,0 +1,157 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://bioexcel.eu/biobb_bioml/json_schemas/1.0/model_training",
+    "name": "biobb_bioml Model training",
+    "title": "Wrapper class for the bioml Model training module.",
+    "description": "Train the models.",
+    "type": "object",
+    "info": {
+        "wrapped_software": {
+            "name": "BioMl generate model",
+            "version": ">0.1",
+            "license": "LGPL 2.1"
+        },
+        "ontology": {
+            "name": "EDAM",
+            "schema": "http://edamontology.org/EDAM.owl"
+        }
+    },
+    "required": [
+        "input_excel",
+        "label",
+        "hyperparameters",
+        "training_output"
+    ],
+    "properties": {
+        "input_excel": {
+            "type": "string",
+            "description": "The file to where the selected features are saved in excel format",
+            "filetype": "input",
+            "sample": null,
+            "enum": [
+                ".*\\.xlsx$"
+            ],
+            "file_formats": [
+                {
+                    "extension": ".*\\.xlsx$",
+                    "description": "The file to where the selected features are saved in excel format",
+                    "edam": "format_3620"
+                }
+            ]
+        },
+        "label": {
+            "type": "string",
+            "description": "The path to the labels of the training set in a csv format",
+            "filetype": "input",
+            "sample": null,
+            "enum": [
+                ".*\\.csv$"
+            ],
+            "file_formats": [
+                {
+                    "extension": ".*\\.csv$",
+                    "description": "The path to the labels of the training set in a csv format",
+                    "edam": "format_3752"
+                }
+            ]
+        },
+        "hyperparameters": {
+            "type": "string",
+            "description": "The path to the hyperparameters of the training set in a csv format",
+            "filetype": "output",
+            "sample": null,
+            "enum": [
+                ".*\\.xlsx$"
+            ],
+            "file_formats": [
+                {
+                    "extension": ".*\\.xlsx$",
+                    "description": "The path to the hyperparameters of the training set in a csv format",
+                    "edam": "format_3620"
+                }
+            ]
+        },
+        "training_output": {
+            "type": "string",
+            "description": "(\"training_results\") The zip where to save the models training results",
+            "filetype": "output",
+            "sample": null,
+            "enum": [
+                ".*\\.ZIP$"
+            ],
+            "file_formats": [
+                {
+                    "extension": ".*\\.ZIP$",
+                    "description": "(\"training_results\") The zip where to save the models training results",
+                    "edam": "format_3989"
+                }
+            ]
+        },
+        "properties": {
+            "type": "object",
+            "properties": {
+                "num_thread": {
+                    "type": "integer",
+                    "default": 50,
+                    "wf_prop": false,
+                    "description": "The number of threads to search for the hyperparameter space."
+                },
+                "scaler": {
+                    "type": "string",
+                    "default": "robust",
+                    "wf_prop": false,
+                    "description": "\"Choose one of the scaler available in scikit-learn, defaults to RobustScaler. Option: (\"robust\", \"standard\", \"minmax\")."
+                },
+                "kfold_parameters": {
+                    "type": "string",
+                    "default": "5:0.2",
+                    "wf_prop": false,
+                    "description": "The parameters for the kfold in num_split:test_size format."
+                },
+                "outliers": {
+                    "type": "string",
+                    "default": null,
+                    "wf_prop": false,
+                    "description": "A list of outliers if any, the name should be the same as in the excel file with the filtered features, you can also specify the path to a file in plain text format, each record should be in a new line."
+                },
+                "precision_weight": {
+                    "type": "number",
+                    "default": 1.0,
+                    "wf_prop": false,
+                    "description": "Weights to specify how relevant is the precision for the ranking of the different features."
+                },
+                "recall_weight": {
+                    "type": "number",
+                    "default": 0.8,
+                    "wf_prop": false,
+                    "description": "Weights to specify how relevant is the recall for the ranking of the different features."
+                },
+                "class0_weight": {
+                    "type": "number",
+                    "default": 0.5,
+                    "wf_prop": false,
+                    "description": "Weights to specify how relevant is the f1, precision and recall scores of the class 0 or the negative class for the ranking of the different features with respect to class 1 or the positive class."
+                },
+                "report_weight": {
+                    "type": "number",
+                    "default": 0.25,
+                    "wf_prop": false,
+                    "description": "Weights to specify how relevant is the f1, precision and recall for the ranking of the different features with respect to MCC which is a more general measures of the performance of a model."
+                },
+                "difference_weight": {
+                    "type": "number",
+                    "default": 1.1,
+                    "wf_prop": false,
+                    "description": "How important is to have similar training and test metrics."
+                },
+                "small": {
+                    "type": "string",
+                    "default": null,
+                    "wf_prop": false,
+                    "description": "Default to true, if the number of samples is < 300 or if you machine is slow. The hyperparameters tuning will fail if you set trial time short and your machine is slow."
+                }
+            }
+        }
+    },
+    "additionalProperties": false
+}

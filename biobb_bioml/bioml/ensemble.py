@@ -17,7 +17,7 @@ class Ensemble(BiobbObject):
     | Generate ensemble of models from the user specified sheets in order to select the best combination of sheets and kfolds.
 
     Args:
-        input_excel (str): The file to where the selected features are saved in excel format. Accepted formats: XLSX (edam:format_3620).
+        input_excel (str): The file to where the selected features are saved in excel format. File type: input. Accepted formats: XLSX (edam:format_3620).
         input_hyperparameter (str): Hyperparameter file. File type: input. Accepted formats: XLSX (edam:format_3620).
         sheets (str): Names or index of the selected sheets for both features and hyperparameters. File type: input. Accepted formats: STRING (edam:format_2560).
         label (str): The path to the labels of the training set in a csv format. File type: input. Accepted formats: CSV (edam:format_3752).
@@ -34,7 +34,7 @@ class Ensemble(BiobbObject):
             * **label** (*str*) - (None) The path to the labels of the training set in a csv format.
             * **scaler** (*str*) - ("robust") Choose one of the scaler available in scikit-learn, defaults to RobustScaler.
             * **outliers** (*str*) - (None) A list of outliers if any, the name should be the same as in the excel file with the filtered features, you can also specify the path to a file in plain text format, each record should be in a new line.
-           
+
     Examples:
         This is a use example of how to use the building block from Python::
 

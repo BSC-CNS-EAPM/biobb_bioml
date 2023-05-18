@@ -1,0 +1,92 @@
+{
+    "_id": "biobb_bioml",
+    "desc": "Biobb_bioml is the Biobb module collection to perform.",
+    "github": "https://github.com/bioexcel/biobb_bioml",
+    "readthedocs": "https://biobb-bioml.readthedocs.io/en/latest/",
+    "conda": "https://anaconda.org/bioconda/biobb_bioml",
+    "docker": "https://quay.io/biocontainers/biobb_bioml:4.0.0--pyhdfd78af_1",
+    "singularity": "https://depot.galaxyproject.org/singularity/biobb_bioml:4.0.0--pyhdfd78af_1",
+    "version": "0.1",
+    "rest": false,
+    "tools" : [
+        {
+            "block" : "Ensemble",
+            "tool" : "Ensemble",
+            "desc" : "EnsembleEnsemble",
+            "exec" : "ensemble",
+            "docs": "Ensemble.html",
+            "rest": false
+        },
+        {
+            "block" : "Predict",
+            "tool" : "Predict",
+            "desc" : "PredictPredict",
+            "exec" : "predict",
+            "docs": "Predict",
+            "rest": false
+        },
+        {
+            "block" : "Outlier",
+            "tool" : "Outlier",
+            "desc" : "OutlierOutlier",
+            "exec" : "outlier",
+            "docs": "Outlier",
+            "rest": false
+        },
+        {
+            "block" : "Model_training",
+            "tool" : "Model_training",
+            "desc" : "Model_trainingModel_training",
+            "exec" : "model_training",
+            "docs": "Model_training",
+            "rest": false
+        },
+        {
+            "block" : "Generate_pssm",
+            "tool" : "Generate_pssm",
+            "desc" : "Generate_pssm",
+            "exec" : "generate_pssm",
+            "docs": "generate_pssm",
+            "rest": false
+        },
+        {
+            "block" : "Generate_model",
+            "tool" : "Generate_model",
+            "desc" : "Generate_modelGenerate_model",
+            "exec" : "generate_model",
+            "docs": "Generate_modelGenerate_model",
+            "rest": false
+        },
+        {
+            "block" : "Feature_selection",
+            "tool" : "Feature_selection",
+            "desc" : "Feature_selectionFeature_selection",
+            "exec" : "feature_selection",
+            "docs": "Feature_selection",
+            "rest": false
+        },
+        {
+            "block" : "Feature_extraction",
+            "tool" : "Feature_extraction",
+            "desc" : "Feature_extractionFeature_extraction",
+            "exec" : "feature_extraction",
+            "docs": "Feature_extractionFeature_extraction",
+            "rest": false
+        }
+    ],
+    "dep_pypi" : [
+        "install_requires=['biobb_common==4.0.0', 'psutil', 'numpy', 'biopython==1.79']",
+        "python_requires='>=3.7,<3.10'"
+    ],
+    "dep_conda" : [
+        "python >=3.7,<3.10",
+        "biobb_common ==4.0.0",
+        "psutil",
+        "numpy",
+        "biopython==1.79"
+    ],
+    "keywords" : [
+        "ml",
+        "algorithms"
+    ]
+}
