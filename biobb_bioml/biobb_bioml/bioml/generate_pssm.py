@@ -12,7 +12,7 @@ from biobb_bioml.bioml import common as com
 class Generate_pssm(BiobbObject):
     """
     | biobb_bioml Generate pssm
-    | Wrapper class for the `bioml Generate pssm module.
+    | Wrapper class for the bioml Generate pssm module.
     | Creates a database and performs psiblast.
 
     Args:
@@ -116,10 +116,11 @@ class Generate_pssm(BiobbObject):
         self.run_biobb()
 
         # Zip output
+        results_path = os.path.join(os.path.dirname(os.path.dirname(self.stage_io_dict['out']['output_pssm'])), os.path.basename(self.stage_io_dict["out"]["output_pssm"]))
         to_zip = []
         to_zip.append(self.stage_io_dict["out"]["output_pssm"].rstrip('.zip'))
-        to_zip.append(self.stage_io_dict["unique_dir"])
-        com.zip_list(self.stage_io_dict["out"]["output_pssm"], to_zip)
+        print(f"Zipping {to_zip} to {results_path}")
+        com.zip_list(results_path, to_zip)
 
         # Remove temporal files
         self.tmp_files.extend([self.stage_io_dict.get("unique_dir"), ""])

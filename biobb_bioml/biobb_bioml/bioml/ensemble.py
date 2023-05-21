@@ -7,7 +7,7 @@ from biobb_common.configuration import settings
 from biobb_common.tools import file_utils as fu
 from biobb_common.tools.file_utils import launchlogger
 from biobb_bioml.bioml import common as com
-
+import os
 
 
 class Ensemble(BiobbObject):
@@ -19,9 +19,9 @@ class Ensemble(BiobbObject):
     Args:
         input_excel (str): The file to where the selected features are saved in excel format. File type: input. Accepted formats: XLSX (edam:format_3620).
         input_hyperparameter (str): Hyperparameter file. File type: input. Accepted formats: XLSX (edam:format_3620).
-        sheets (str): Names or index of the selected sheets for both features and hyperparameters. File type: input. Accepted formats: STRING (edam:format_2560).
-        label (str): The path to the labels of the training set in a csv format. File type: input. Accepted formats: CSV (edam:format_3752).
+        sheets (str): Names or index of the selected sheets for both features and hyperparameters. File type: input. Accepted formats: text (edam:format_1964).
         ensemble_output (str): The zip file to the output for the ensemble results. File type: output. Accepted formats: ZIP (edam:format_3987).
+        label (str): The path to the labels of the training set in a csv format. File type: input. Accepted formats: CSV (edam:format_3752).
         properties (dict):
             * **prediction_threshold** (*float*) - (1.0) Between 0.5 and 1 and determines what considers to be a positive prediction, if 1 only those predictions where all models agrees are considered to be positive.
             * **num_thread** (*int*) - (10) The number of threads to use for the parallelization of outlier detection.
@@ -34,7 +34,7 @@ class Ensemble(BiobbObject):
             * **label** (*str*) - (None) The path to the labels of the training set in a csv format.
             * **scaler** (*str*) - ("robust") Choose one of the scaler available in scikit-learn, defaults to RobustScaler.
             * **outliers** (*str*) - (None) A list of outliers if any, the name should be the same as in the excel file with the filtered features, you can also specify the path to a file in plain text format, each record should be in a new line.
-
+           
     Examples:
         This is a use example of how to use the building block from Python::
 
@@ -106,18 +106,18 @@ class Ensemble(BiobbObject):
         # This is a placeholder
         fu.log('Creating command line with parameters', self.out_log, self.global_log)
         self.cmd = ['python -m BioML.ensemble',
-                    '-e', self.stage_io_dict["in"]["input_excel"],
-                    '-hp', self.stage_io_dict["in"]["input_hyperparameter"],
-                    '-s', self.stage_io_dict["in"]["sheets"],
-                    '-l', self.stage_io_dict["in"]["label"],
-                    '-o', self.stage_io_dict["out"]["output_ensemble"].rstrip('.zip')]
+                    '--excel', self.stage_io_dict["in"]["input_excel"],
+                    '--hyperparameter_path', self.stage_io_dict["in"]["input_hyperparameter"],
+                    '--sheets', self.stage_io_dict["in"]["sheets"],
+                    '--label', self.stage_io_dict["in"]["label"],
+                    '--ensemble_output', self.stage_io_dict["out"]["output_ensemble"].rstrip('.zip')]
 
         if self.prediction_threshold:
             self.cmd.append('--prediction_threshold')
             self.cmd.append(self.prediction_threshold)
         if self.num_thread:
             self.cmd.append('--num_thread')
-            self.cmd.append(self.num_thread)
+            self.cmd.append(str(self.num_thread))
         if self.precision_weight:
             self.cmd.append('--precision_weight')
             self.cmd.append(self.precision_weight)
@@ -141,17 +141,18 @@ class Ensemble(BiobbObject):
             self.cmd.append(self.scaler)
         if self.outliers:
             self.cmd.append('--outliers')
-            self.cmd.append(self.outliers)
-
+            for outlier in self.outliers.split(','):
+                self.cmd.append(f'"{outlier}"')
+            
         # Run Biobb block
         self.run_biobb()
 
         # Zip the output
+        results_path = os.path.join(os.path.dirname(os.path.dirname(self.stage_io_dict['out']['output_ensemble'])), os.path.basename(self.stage_io_dict["out"]["output_ensemble"]))
         to_zip = []
-        to_zip.append(self.stage_io_dict["out"]["output_ensemble"].rstrip('.zip'))
-        to_zip.append(self.stage_io_dict["unique_dir"])
-        com.zip_list(self.stage_io_dict["out"]["output_ensemble"], to_zip)
-
+        to_zip.append(os.path.basename(self.stage_io_dict["unique_dir"]))
+        print(f"Zipping {to_zip} to {results_path}")
+        com.zip_list(results_path, to_zip)
 
         # Remove temporal files
         self.tmp_files.extend([self.stage_io_dict.get("unique_dir"), ""])
@@ -160,12 +161,12 @@ class Ensemble(BiobbObject):
         return self.return_code
 
 
-def ensemble(input_excel: str, input_hyperparameter_path: str, sheets:str, label: str, output_ensemble: str,
-              properties: dict = None, **kwargs) -> int:
+def ensemble(input_excel: str, input_hyperparameter: str, sheets:str, label: str, output_ensemble: str,
+            properties: dict = None, **kwargs) -> int:
     """Create :class:`Ensemble <bioml.ensemble.Ensemble>` class and
         execute the :meth:`launch() <bioml.ensemble.Ensemble.launch>` method."""
-    return Ensemble(input_excel=input_excel, input_hyperparameter_path=input_hyperparameter_path,
-                    sheets=sheets, output_ensemble=output_ensemble, properties=properties, **kwargs).launch()
+    return Ensemble(input_excel=input_excel, input_hyperparameter=input_hyperparameter,
+                    sheets=sheets, label=label, output_ensemble=output_ensemble, properties=properties, **kwargs).launch()
 
 
 def main():
@@ -178,7 +179,7 @@ def main():
     required_args = parser.add_argument_group('required arguments')
     required_args.add_argument('--input_excel', required=True)
     required_args.add_argument('--input_hyperparameter', required=True)
-    required_args.add_argument('--sheets', required=True)
+    required_args.add_argument('--sheets', required=False)
     required_args.add_argument('--label', required=True)
     required_args.add_argument('--ensemble_output', required=True)
 
@@ -187,7 +188,7 @@ def main():
     properties = settings.ConfReader(config=config).get_prop_dic()
 
     # Specific call of each building block
-    ensemble(input_excel=args.e, input_hyperparameter_path=args.hp, sheets=arg.sheets, output_ensemble=args.o,
+    ensemble(input_excel=args.input_excel, input_hyperparameter=args.input_hyperparameter, sheets=args.sheets, label=args.label, output_ensemble=args.ensemble_output,
             properties=properties)
 
 

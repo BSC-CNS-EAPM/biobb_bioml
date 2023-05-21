@@ -9,6 +9,8 @@ from biobb_common.generic.biobb_object import BiobbObject
 from biobb_common.configuration import settings
 from biobb_common.tools import file_utils as fu
 from biobb_common.tools.file_utils import launchlogger
+from biobb_bioml.bioml import common as com
+
 
 
 
@@ -129,9 +131,12 @@ class Feature_selection(BiobbObject):
         self.run_biobb()
 
         # Zip output
+        results_path = os.path.join(os.path.dirname(os.path.dirname(self.stage_io_dict['out']['output_zip'])), os.path.basename(self.stage_io_dict["out"]["output_zip"]))
         to_zip = []
-        to_zip.append(self.stage_io_dict["unique_dir"])
-        com.zip_list(self.stage_io_dict["out"]["output_zip"], to_zip)
+        unique= os.path.basename(self.stage_io_dict["unique_dir"])
+        to_zip.append(f"{unique}/shap_features")
+        print(f"Zipping {to_zip} to {results_path}")
+        com.zip_list(results_path, to_zip)
 
 
         # Remove temporal files

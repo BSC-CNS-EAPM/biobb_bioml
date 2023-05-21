@@ -73,7 +73,7 @@ class Feature_extraction(BiobbObject):
             * schema: http://edamontology.org/EDAM.owl
     """
 
-    def __init__(self, input_fasta: str, every_features: str, new_features: str, pssm: str, output_zip: str, properties: dict = None, **kwargs) -> None:
+    def __init__(self, input_fasta: str, every_features: str, new_features: str, pssm: str, properties: dict = None, **kwargs) -> None:
         properties = properties or {}
 
         # Call parent class constructor
@@ -188,10 +188,9 @@ class Feature_extraction(BiobbObject):
         # Copy to host
         self.copy_to_host()
 
-
         # Remove temporal files
-        self.tmp_files.extend([self.stage_io_dict.get("unique_dir"), ""]) #s
-        self.tmp_files.extend(elf.pssm_directory+'/pssm')
+        self.tmp_files.extend([self.stage_io_dict.get("unique_dir"), ""])
+        self.tmp_files.extend(self.pssm_directory+'/pssm')
         self.remove_tmp_files()
 
         return self.return_code
@@ -221,7 +220,7 @@ def main():
     properties = settings.ConfReader(config=config).get_prop_dic()
 
     # Specific call of each building block
-    feature_extraction(input_fasta=args.input_fasta, pssm=args.pssm, new_features=args.new_features, every_features=args.every_features, output_zip=args.output_zip, properties=properties)
+    feature_extraction(input_fasta=args.input_fasta, pssm=args.pssm, new_features=args.new_features, every_features=args.every_features, properties=properties)
 
 
 if __name__ == '__main__':

@@ -7,6 +7,7 @@ from biobb_common.configuration import settings
 from biobb_common.tools import file_utils as fu
 from biobb_common.tools.file_utils import launchlogger
 from biobb_bioml.bioml import common as com
+import os
 
 
 
@@ -144,10 +145,13 @@ class Model_training(BiobbObject):
         self.copy_to_host()
 
         # Zip output
+        results_path = os.path.join(os.path.dirname(os.path.dirname(self.stage_io_dict['out']['training_output'])), os.path.basename(self.stage_io_dict["out"]["training_output"]))
         to_zip = []
-        to_zip.append(self.stage_io_dict["out"]["training_output"])
-        to_zip.append(self.stage_io_dict["unique_dir"])
-        com.zip_list(self.stage_io_dict["out"]["training_output"], to_zip)
+        unique= os.path.basename(self.stage_io_dict["unique_dir"])
+        res1 = os.path.basename(self.stage_io_dict["out"]["training_output"]).rstrip('.zip')
+        to_zip.append(f"{unique}/{res1}")
+        print(f"Zipping {to_zip} to {results_path}")
+        com.zip_list(results_path, to_zip)
 
         # Remove temporal files
         self.tmp_files.extend([self.stage_io_dict.get("unique_dir"), ""])

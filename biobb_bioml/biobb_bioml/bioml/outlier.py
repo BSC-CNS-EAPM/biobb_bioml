@@ -21,7 +21,8 @@ class Outlier(BiobbObject):
         properties (dict):
             * **num_thread** (*int*) - (10) The number of threads to use for the parallelization of outlier detection.
             * **scaler** (*str*) - ("robust") "Choose one of the scaler available in scikit-learn, defaults to RobustScaler. Option: ("robust", "standard", "minmax").
-            * **contamination** (*float*) - (0.06) The expected % of outliers.
+            * **contamination** (*float*) - (0.06) The expected % of outliers. 
+            * **num_features** (*float*) - (0.8) The fraction of features to use, maximum 1 which is all the features.
 
     Examples:
         This is a use example of how to use the building block from Python::
@@ -29,10 +30,11 @@ class Outlier(BiobbObject):
             from biobb_bioml.outlier import outlier
             prop = {num_thread: 10,
                     scaler: 'robust',
-                    contamination: 0.06}
+                    contamination: 0.06,
+                    num_features: 0.8}
 
             outlier(input_excel='training_features/selected_features.xlsx',
-                            output_outlier = 'training_results/outliers.csv',
+                            output_outlier = 'outliers.csv',
                             properties=prop)
 
     Info:
@@ -51,7 +53,7 @@ class Outlier(BiobbObject):
         # Call parent class constructor
         super().__init__(properties)
 
-        output_outlier = output_outlier or "training_results/outliers.csv"
+        output_outlier = output_outlier or "outliers.csv"
 
         # Input/Output files
         self.io_dict = {
@@ -63,6 +65,7 @@ class Outlier(BiobbObject):
         self.num_thread = properties.get('num_thread', None)
         self.scaler = properties.get('scaler', None)
         self.contamination = properties.get('contamination', None)
+        self.num_features = properties.get('num_features', None)
         # Properties common in all BB
 
         # Check the properties
@@ -91,9 +94,15 @@ class Outlier(BiobbObject):
         if self.contamination:
             self.cmd.append('--contamination')
             self.cmd.append(self.contamination)
+        if self.num_features:
+            self.cmd.append('--num_features')
+            self.cmd.append(str(self.num_features))
 
         # Run Biobb block
         self.run_biobb()
+
+        # Copy files to host
+        self.copy_to_host()
 
         # Remove temporal files
         self.tmp_files.extend([self.stage_io_dict.get("unique_dir"), ""])

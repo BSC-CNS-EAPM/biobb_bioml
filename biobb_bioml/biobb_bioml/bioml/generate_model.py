@@ -9,6 +9,8 @@ from biobb_common.generic.biobb_object import BiobbObject
 from biobb_common.configuration import settings
 from biobb_common.tools import file_utils as fu
 from biobb_common.tools.file_utils import launchlogger
+from biobb_bioml.bioml import common as com
+
 
 
 class Generate_model(BiobbObject):
@@ -59,6 +61,9 @@ class Generate_model(BiobbObject):
         # Call parent class constructor
         super().__init__(properties)
 
+        #output_model = f"/data/galaxy_extra/tmp/{output_model}"
+        output_model = "/home/bubbles/Ruite/esterase_dataset/tmp/{output_model}"
+
         # Input/Output files
         self.io_dict = {
             "in": {"input_excel": input_excel, "input_hyperparameter": input_hyperparameter, "sheets": sheets, "label": label},
@@ -94,22 +99,23 @@ class Generate_model(BiobbObject):
 
         if self.num_thread:
             self.cmd.append('--num_thread')
-            self.cmd.append(self.num_thread)
+            self.cmd.append(str(self.num_thread))
         if self.scaler:
             self.cmd.append('--scaler')
             self.cmd.append(self.scaler)
         if self.outliers:
             self.cmd.append('--outliers')
-            self.cmd.append(self.outliers)
+            self.cmd.append(str(self.outliers))
 
         # Run Biobb block
         self.run_biobb()
 
         # Zip output
+        results_path = os.path.join(os.path.dirname(os.path.dirname(self.stage_io_dict['out']['output_model'])), os.path.basename(self.stage_io_dict["out"]["output_model"]))
         to_zip = []
-        to_zip.append(self.stage_io_dict["out"]["output_model"].rstrip('.zip'))
-        to_zip.append(self.stage_io_dict["unique_dir"])
-        com.zip_list(self.stage_io_dict["out"]["output_model"], to_zip)
+        to_zip.append(os.path.basename(self.stage_io_dict["out"]["output_model"]).rstrip('.zip'))
+        print(f"Zipping {to_zip} to {results_path}")
+        com.zip_list(results_path, to_zip)
 
         # Remove temporal files
         self.tmp_files.extend([self.stage_io_dict.get("unique_dir"), ""])
@@ -121,7 +127,7 @@ class Generate_model(BiobbObject):
 def generate_model(input_excel: str, input_hyperparameter: str, sheets: str, label: str, output_model: str, properties: dict = None, **kwargs) -> int:
     """Create :class:`generate_model <bioml.generate_model.Generate_model>` class and
         execute the :meth:`launch() <bioml.generate_model.generate_model.launch>` method."""
-    return Generate_model(input_excel=input_excel, input_hyperparameter=input_hyperparameter, sheets=sheets, output_model=output_model, properties=properties, **kwargs).launch()
+    return Generate_model(input_excel=input_excel, input_hyperparameter=input_hyperparameter, sheets=sheets, label=label, output_model=output_model, properties=properties, **kwargs).launch()
 
 
 def main():
